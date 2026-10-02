@@ -1,4 +1,4 @@
-# House floor plan pipeline
+# LiDAR_Damage_assessment
 
 **Phase 1 + 1b + 2 (current):** LiDAR → stitched plan + QA (orphan openings, overlap) + gate scoring.  
 **Offline.** No Azure. No API keys.
