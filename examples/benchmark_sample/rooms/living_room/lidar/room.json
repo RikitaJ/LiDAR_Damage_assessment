@@ -1,0 +1,41 @@
+{
+  "walls": [
+    {
+      "identifier": "w0",
+      "dimensions": [4.2, 2.6, 0.1],
+      "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    },
+    {
+      "identifier": "w1",
+      "dimensions": [3.5, 2.6, 0.1],
+      "transform": [0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 4.2, 0, 0, 1]
+    },
+    {
+      "identifier": "w2",
+      "dimensions": [4.2, 2.6, 0.1],
+      "transform": [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 4.2, 0, 3.5, 1]
+    },
+    {
+      "identifier": "w3",
+      "dimensions": [3.5, 2.6, 0.1],
+      "transform": [0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 3.5, 1]
+    }
+  ],
+  "doors": [],
+  "windows": [
+    {
+      "identifier": "win0",
+      "category": { "label": "window" },
+      "dimensions": [1.4, 1.2, 0.05],
+      "parentIdentifier": "w0"
+    }
+  ],
+  "openings": [
+    {
+      "identifier": "d0",
+      "category": { "label": "door" },
+      "dimensions": [0.92, 2.05, 0.05],
+      "parentIdentifier": "w3"
+    }
+  ]
+}

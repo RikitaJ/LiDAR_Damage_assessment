@@ -1,0 +1,27 @@
+[project]
+name = "housefloor-pipeline"
+version = "0.1.0"
+description = "Phase 1: LiDAR floor plan pipeline (offline)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "jsonschema>=4.20",
+  "shapely>=2.0",
+  "matplotlib>=3.8",
+  "networkx>=3.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+housefloor = "pipeline.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pipeline*"]

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StitchedPropertyPlan",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "capture_id",
+    "input_tier",
+    "device",
+    "rooms",
+    "stitched_plan",
+    "damage_regions",
+    "concealed_damage_flags",
+    "scope_line_items",
+    "drift_handling",
+    "pipeline_meta"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "capture_id": { "type": "string" },
+    "input_tier": { "enum": ["photos", "video", "lidar"] },
+    "device": {
+      "type": "object",
+      "required": ["model", "has_lidar"],
+      "properties": {
+        "model": { "type": "string" },
+        "has_lidar": { "type": "boolean" }
+      }
+    },
+    "rooms": { "type": "array", "items": { "$ref": "#/$defs/room" } },
+    "stitched_plan": { "$ref": "#/$defs/stitched" },
+    "damage_regions": { "type": "array" },
+    "concealed_damage_flags": { "type": "array" },
+    "scope_line_items": { "type": "array" },
+    "drift_handling": { "type": "object" },
+    "pipeline_meta": { "type": "object" }
+  },
+  "$defs": {
+    "measurement": {
+      "type": "object",
+      "required": ["value_m", "confidence"],
+      "properties": {
+        "value_m": { "type": "number" },
+        "confidence": {
+          "type": "object",
+          "required": ["sigma_m", "tier_floor_m"],
+          "properties": {
+            "sigma_m": { "type": "number" },
+            "tier_floor_m": { "type": "number" },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    },
+    "wall": {
+      "type": "object",
+      "required": ["id", "length_m", "polyline_m"],
+      "properties": {
+        "id": { "type": "string" },
+        "length_m": { "$ref": "#/$defs/measurement" },
+        "polyline_m": { "type": "array" },
+        "openings": { "type": "array" }
+      }
+    },
+    "room": {
+      "type": "object",
+      "required": ["room_id", "name", "floor_area_m2", "ceiling_height_m", "walls", "pose_world"],
+      "properties": {
+        "room_id": { "type": "string" },
+        "name": { "type": "string" },
+        "floor_area_m2": { "$ref": "#/$defs/measurement" },
+        "ceiling_height_m": { "$ref": "#/$defs/measurement" },
+        "walls": { "type": "array", "items": { "$ref": "#/$defs/wall" } },
+        "pose_world": { "type": "object" }
+      }
+    },
+    "stitched": {
+      "type": "object",
+      "required": ["footprint_area_m2", "adjacency", "global_walls", "render_path"],
+      "properties": {
+        "footprint_area_m2": { "$ref": "#/$defs/measurement" },
+        "adjacency": { "type": "array" },
+        "global_walls": { "type": "array" },
+        "render_path": { "type": "string" }
+      }
+    }
+  }
+}
