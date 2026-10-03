@@ -1,2 +1,6 @@
 capture_id,tier,device,ios_version,app_and_version,rooms,date_time,url,sha256,notes
 c00a170fe1,lidar,TODO,TODO,Stray Scanner,TODO,TODO,TODO,TODO,Company single-room sample; run scripts/fetch_data.py after URL+sha256 filled; depth+confidence not in git
+lidar_B1_rep1,lidar,iPhone 13 Pro,18.7.8,Stray Scanner (version TODO),B1,2026-10-03T15:34:42+05:30,TODO,be259d608dccf356a52cd8fe68e307143e72662336851375b0d509691e2d87e8,"Trial/pilot = rep 1. sha256 of Stray export 87d2c3f7d8.zip on Drive. 3165 frames at 15 Hz, 211 s; confidence 2 on 88% of depth px; start-end 11 cm. Device from same-session EXIF"
+video_B1,video,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:39:11+05:30,TODO,fa2892c880ad00830289913764b24e40e3192b75ab9bdf11e128e8af77c5fa5e,"sha256 of IMG_9830.MOV. H.264 (not HEVC) 1920x1080 30 fps, 150.5 s, landscape. GPS in metadata"
+photos_B1_1x,photos,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:42:43+05:30,TODO,TODO,"8 HEIC IMG_9831-9838, 4032x3024, 1x (26 mm eq). sha256 TODO: zip the folder before upload. GPS in EXIF"
+photos_B1_05x,photos,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:45:28+05:30,TODO,TODO,"8 HEIC IMG_9839-9846, 0.5x (13-14 mm eq); IMG_9844 is portrait. sha256 TODO: zip the folder before upload. GPS in EXIF"
