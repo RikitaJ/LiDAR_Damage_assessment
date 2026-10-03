@@ -84,17 +84,17 @@ python -m eval.run --rerun --ref 52c7f46 --skip-current --readme README.md
 | B1, pipeline at `52c7f46` | Tape | Ours [90 % interval] | Our error | magicplan 2026.38.0 | Their error |
 |---|---|---|---|---|---|
 | Wall 1 | 4.350 | 4.324 [4.275, 4.373] | -2.6 cm (-0.6 %) | 4.340 | -1.0 cm (-0.2 %) |
-| Wall 2 | 5.600 | 5.528 [5.479, 5.577] | -7.2 cm (-1.3 %) | — | — |
+| Wall 2 | 5.600 | 5.528 [5.479, 5.577] | -7.2 cm (-1.3 %) | 5.400 | -20.0 cm (-3.6 %) |
 | Wall 3 | 4.350 | 4.324 [4.275, 4.373] | -2.6 cm (-0.6 %) | 4.340 | -1.0 cm (-0.2 %) |
-| Wall 4 | 5.600 | 5.528 [5.479, 5.577] | -7.2 cm (-1.3 %) | — | — |
+| Wall 4 | 5.600 | 5.528 [5.479, 5.577] | -7.2 cm (-1.3 %) | 5.400 | -20.0 cm (-3.6 %) |
 | Ceiling height | 2.985 | 2.958 [2.860, 3.055] | -2.7 cm (-0.9 %) | 2.970 | -1.5 cm (-0.5 %) |
-| Floor area (m²) | 24.360 | 23.903 [22.330, 25.476] | -0.46 m² (-1.9 %) | 24.320 | -0.04 m² (-0.2 %) |
+| Floor area (m²) | 24.360 | 23.903 [22.330, 25.476] | -0.46 m² (-1.9 %) | 23.950 | -0.41 m² (-1.7 %) |
 | Door 1 width | 0.889 | 1.042 [0.904, 1.179] | +15.3 cm (+17.2 %) | 0.885 | -0.4 cm (-0.4 %) |
 | Door 2 width | 0.889 | 0.721 [0.626, 0.816] | -16.8 cm (-18.9 %) | — | — |
 | Window 1 width | 0.700 | not detected | — | 0.692 | -0.8 cm (-1.1 %) |
 | Window 2 width | 0.700 | not detected | — | — | — |
 
-Gates: Wall 1 ±2 cm: miss by 0.6 cm; Wall 2 ±2 cm: miss by 5.2 cm; Wall 3 ±2 cm: miss by 0.6 cm; Wall 4 ±2 cm: miss by 5.2 cm; Ceiling height ±1.5 cm: miss by 1.2 cm; Floor area (m²) ±2 %: pass; Door 1 width ±2 cm: miss by 13.3 cm; Door 2 width ±2 cm: miss by 14.8 cm; openings ≥ 85 % within 2 cm: 0 % (miss); head-to-head ≥ 70 % beat or tie: 0 of 5 (miss).
+Gates: Wall 1 ±2 cm: miss by 0.6 cm; Wall 2 ±2 cm: miss by 5.2 cm; Wall 3 ±2 cm: miss by 0.6 cm; Wall 4 ±2 cm: miss by 5.2 cm; Ceiling height ±1.5 cm: miss by 1.2 cm; Floor area (m²) ±2 %: pass; Door 1 width ±2 cm: miss by 13.3 cm; Door 2 width ±2 cm: miss by 14.8 cm; openings ≥ 85 % within 2 cm: 0 % (miss); head-to-head: 2 of 7 beat or tie (gate 70 %).
 <!-- benchmark:end -->
 
 **Not done or partial.**
