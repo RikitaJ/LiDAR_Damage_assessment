@@ -1,6 +1,6 @@
 import json
 
-from eval.accuracy import Row, align_walls, repeatability, score_room
+from eval.accuracy import Row, align_walls, head_to_head, repeatability, score_openings, score_room
 from eval.run import main
 
 
@@ -8,21 +8,28 @@ def _m(value, half=0.05):
     return {"value": value, "lo": value - half, "hi": value + half}
 
 
-def _room(walls, ceiling=2.96, area=23.9, kinds=()):
+def _room(walls, ceiling=2.96, area=23.9, openings=()):
+    ops = [{"kind": kind, "width_m": _m(width)} for kind, width in openings]
     return {
         "room_id": "R1",
-        "walls": [{"length_m": _m(w), "openings": [{"kind": k} for k in kinds] if i == 0 else []} for i, w in enumerate(walls)],
+        "walls": [{"length_m": _m(w), "openings": ops if i == 0 else []} for i, w in enumerate(walls)],
         "ceiling_height_m": _m(ceiling),
         "floor_area_m2": _m(area, 1.5),
     }
 
 
+TAPED = [
+    {"room_id": "R1", "kind": "door", "width_cm": 88.9},
+    {"room_id": "R1", "kind": "door", "width_cm": 88.9},
+    {"room_id": "R1", "kind": "window", "width_cm": 70.0},
+    {"room_id": "R1", "kind": "window", "width_cm": 70.0},
+]
 GT = {
     "_meta": {"status": "complete", "room": "B1"},
     "footprint_area_m2": 24.36,
-    "ceiling_height_cm": {"R1": 298},
+    "ceiling_height_cm": {"R1": 298.5},
     "wall_lengths_cm": {"R1": [435, 560, 435, 560]},
-    "opening_counts": {"R1": {"door": 2, "window": 2}},
+    "openings_cm": TAPED,
 }
 
 
@@ -47,13 +54,33 @@ def test_row_gates_and_coverage():
 
 
 def test_score_room_lidar_against_tape():
-    rows, detection = score_room(_room([4.324, 5.528, 4.324, 5.528], kinds=("door",) * 8), GT, "R1", "lidar")
+    rows, openings = score_room(_room([4.324, 5.528, 4.324, 5.528], openings=[("door", 0.90)] * 8), GT, "R1", "lidar")
     by_name = {r.name: r for r in rows}
     assert [r.name for r in rows][:4] == ["Wall 1", "Wall 2", "Wall 3", "Wall 4"]
     assert by_name["Wall 2"].passed is False and not by_name["Wall 2"].covered
     assert by_name["Ceiling height"].passed is False and by_name["Ceiling height"].covered
     assert by_name["Floor area (m²)"].passed is True
-    assert detection["missed"] == 2 and detection["phantom"] == 6
+    assert (openings["hits"], openings["missed"], openings["phantom"]) == (2, 2, 6)
+    assert openings["rate"] == 0.2 and not openings["passed"]
+
+
+def test_inaccurate_opening_is_one_miss_not_a_phantom():
+    result = score_openings(_room([4.35], openings=[("door", 0.95)]), TAPED[:1])
+    assert (result["hits"], result["missed"], result["phantom"]) == (0, 1, 0)
+
+
+def test_all_openings_within_2cm_pass():
+    found = [("door", 0.895), ("door", 0.88), ("window", 0.71), ("window", 0.695)]
+    result = score_openings(_room([4.35], openings=found), TAPED)
+    assert result["hits"] == 4 and result["phantom"] == 0 and result["passed"]
+
+
+def test_head_to_head_beat_tie_lose():
+    rows, _ = score_room(_room([4.324, 5.528, 4.324, 5.528], ceiling=2.958), GT, "R1", "lidar")
+    app = {"wall_lengths_cm": [430.0, 560.0, 432.2, 562.0], "ceiling_height_cm": 290.0}
+    h2h = head_to_head(rows, app)
+    assert [r["result"] for r in h2h["rows"]] == ["beat", "lose", "tie", "lose", "beat"]
+    assert h2h["beat_or_tie"] == 3 and not h2h["passed"]
 
 
 def test_video_tier_uses_relative_wall_gate():
@@ -76,16 +103,27 @@ def test_report_from_existing_runs(tmp_path):
     (gt_dir / "fixture.json").write_text(json.dumps(GT), encoding="utf-8")
     manifest = tmp_path / "manifest.csv"
     manifest.write_text("capture_id,tier\nb1_rep1,lidar\ntodo,lidar\n", encoding="utf-8")
-    for cid in ("b1_rep1",):
-        (runs / cid).mkdir(parents=True)
-        plan = {"input_tier": "lidar", "rooms": [_room([4.324, 5.528, 4.324, 5.528])]}
-        (runs / cid / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    (runs / "b1_rep1").mkdir(parents=True)
+    plan = {"input_tier": "lidar", "rooms": [_room([4.324, 5.528, 4.324, 5.528], openings=[("door", 0.90)])]}
+    (runs / "b1_rep1" / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    apps = tmp_path / "apps"
+    apps.mkdir()
+    app = {"app": "magicplan", "version": "2026.38.0", "source": "read from the app's plan view",
+           "wall_lengths_cm": [436.0, 559.0, 436.0, 559.0]}
+    (apps / "magicplan_b1_rep1.json").write_text(json.dumps(app), encoding="utf-8")
     report = tmp_path / "REPORT.md"
     args = ["--gt", str(gt_dir), "--runs", str(runs), "--captures", str(tmp_path / "none"),
-            "--manifest", str(manifest), "--report", str(report)]
+            "--manifest", str(manifest), "--apps", str(apps), "--report", str(report)]
     assert main(args) == 0
     text = report.read_text(encoding="utf-8")
-    assert "## b1_rep1 (lidar)" in text
+    assert "## b1_rep1 (lidar), pipeline at `" in text
+    assert "| -1.3 % | -2.5 cm (-0.8 %) | -1.9 % | 1 of 4 within 2 cm, 0 phantom | 5 of 7 |" in text
     assert "| Wall 2 | 5.600 | 5.528 [5.478, 5.578] | -7.2 cm (-1.3 %) | ±2 cm | **FAIL** | no |" in text
-    assert "Tape value inside the 90 % interval: 4 of 6 measurements." in text
+    assert "Score 1 / (4 + 0) = 25 % (gate ≥ 85 %): **FAIL**." in text
+    assert "Tape value inside the 90 % interval: 5 of 7 measurements." in text
+    assert ("largest error on walls, ceiling and floor area is 1.9 % of the tape value; "
+            "1 of 6 strict gates pass; openings 1 of 4 within 2 cm (0 phantom).") in text
+    assert "### Head-to-head: magicplan 2026.38.0" in text
+    assert "| Wall 1 | 4.350 | 4.324 | 4.360 | -2.6 cm | +1.0 cm | lose |" in text
+    assert "Beat or tie on 0 of 4 shared dimensions (gate ≥ 70 %; tie = errors within 3 mm): **FAIL**." in text
     assert "todo" not in text and "fixture" not in text

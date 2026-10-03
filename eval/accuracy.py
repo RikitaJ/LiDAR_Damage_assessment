@@ -10,6 +10,10 @@ TOLERANCES: dict[str, dict[str, tuple[str, float] | None]] = {
     "video": {"wall": ("rel", 0.03), "area": None, "ceiling": ("abs", 0.015)},
     "photos": {"wall": ("rel", 0.08), "area": ("rel", 0.08), "ceiling": ("abs", 0.015)},
 }
+OPENING_WIDTH_TOL_M = 0.02
+OPENING_PASS_RATE = 0.85
+TIE_M = 0.003  # brief §3: a tie is a difference in absolute error of at most 3 mm, the precision of tape
+HEAD_TO_HEAD_RATE = 0.70
 REPEAT_WALL_ABS_M = 0.01
 REPEAT_WALL_REL = 0.005
 REPEAT_CEILING_SPREAD_M = 0.01
@@ -81,21 +85,50 @@ def score_room(room: dict, gt: dict, room_id: str, tier: str) -> tuple[list[Row]
         v, lo, hi = measurement(room["floor_area_m2"])
         rows.append(Row("Floor area (m²)", float(area), v, lo, hi, tol["area"]))
 
-    detection = {}
-    counts = gt.get("opening_counts", {}).get(room_id)
-    if counts:
-        found: dict[str, int] = {}
-        for w in room.get("walls", []):
-            for op in w.get("openings", []):
-                found[op.get("kind", "opening")] = found.get(op.get("kind", "opening"), 0) + 1
-        kinds = sorted(set(counts) | set(found))
-        detection = {
-            "truth": counts,
-            "found": found,
-            "missed": sum(max(0, counts.get(k, 0) - found.get(k, 0)) for k in kinds),
-            "phantom": sum(max(0, found.get(k, 0) - counts.get(k, 0)) for k in kinds),
-        }
-    return rows, detection
+    taped = [o for o in gt.get("openings_cm", []) if o.get("room_id", room_id) == room_id and "width_cm" in o]
+    return rows, score_openings(room, taped) if taped else {}
+
+
+def score_openings(room: dict, taped: list[dict]) -> dict:
+    """Spec rule: hits within 2 cm over (taped + phantom); a missed and a phantom opening each count as a miss."""
+    found = [(op.get("kind", "opening"), measurement(op["width_m"])) for w in room.get("walls", []) for op in w.get("openings", [])]
+    free = set(range(len(found)))
+    rows: list[Row] = []
+    seen: dict[str, int] = {}
+    for t in taped:
+        kind, width = t["kind"], t["width_cm"] / 100
+        seen[kind] = seen.get(kind, 0) + 1
+        same_kind = [j for j in free if found[j][0] == kind]
+        if not same_kind:
+            continue
+        j = min(same_kind, key=lambda j: abs(found[j][1][0] - width))
+        free.discard(j)
+        v, lo, hi = found[j][1]
+        rows.append(Row(f"{kind.title()} {seen[kind]} width", width, v, lo, hi, ("abs", OPENING_WIDTH_TOL_M)))
+    hits = sum(bool(r.passed) for r in rows)
+    phantom = len(free)
+    rate = hits / (len(taped) + phantom)
+    return {
+        "rows": rows, "taped": len(taped), "found": len(found), "hits": hits,
+        "missed": len(taped) - hits, "phantom": phantom, "rate": rate, "passed": rate >= OPENING_PASS_RATE,
+    }
+
+
+def head_to_head(ours: list[Row], app: dict) -> dict:
+    """Shared length dimensions (walls, ceiling): beat, tie (within 3 mm of our error) or lose against the app."""
+    walls = [r for r in ours if r.name.startswith("Wall")]
+    app_walls = [cm / 100 for cm in app.get("wall_lengths_cm", [])]
+    pairs = [(r, app_walls[j]) for r, j in zip(walls, align_walls(app_walls, [r.truth for r in walls])) if j is not None]
+    ceiling = next((r for r in ours if r.name == "Ceiling height"), None)
+    if ceiling is not None and app.get("ceiling_height_cm") is not None:
+        pairs.append((ceiling, app["ceiling_height_cm"] / 100))
+    rows = []
+    for r, theirs in pairs:
+        gap = abs(theirs - r.truth) - abs(r.error)
+        rows.append({"name": r.name, "truth": r.truth, "ours": r.value, "theirs": theirs,
+                     "result": "tie" if abs(gap) <= TIE_M else ("beat" if gap > 0 else "lose")})
+    wins = sum(row["result"] != "lose" for row in rows)
+    return {"rows": rows, "beat_or_tie": wins, "passed": bool(rows) and wins / len(rows) >= HEAD_TO_HEAD_RATE}
 
 
 def repeatability(room_a: dict, room_b: dict) -> dict:

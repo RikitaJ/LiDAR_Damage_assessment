@@ -2,16 +2,20 @@
   "_meta": {
     "status": "complete",
     "room": "B1",
-    "source": "Tape measure, 2026-10-03, two people. Reported as room 4.35 m x 5.60 m, ceiling 2.98 m.",
+    "source": "Tape measure, 2026-10-03 and 2026-10-04, two people. Room 4.35 m x 5.60 m; ceiling read twice (2.98 m, 2.99 m); doors and windows re-taped.",
     "assumptions": [
       "Opposite walls equal: length and width were reported, not each of the four walls.",
-      "footprint_area_m2 = 4.35 x 5.60 (rectangular room). A separate rough estimate gave 24.8-25.0 m2.",
-      "Openings: 2 doors (entry, bathroom) and 2 windows. Widths not measured, so the opening-width gate is not scored."
+      "footprint_area_m2 = 4.35 x 5.60 (rectangular room).",
+      "Both doors share one size and both windows share one size; taped in feet and converted (1 ft = 30.48 cm)."
     ]
   },
   "footprint_area_m2": 24.36,
-  "ceiling_height_cm": {"R1": 298},
+  "ceiling_height_cm": {"R1": 298.5},
   "wall_lengths_cm": {"R1": [435, 560, 435, 560]},
-  "opening_counts": {"R1": {"door": 2, "window": 2}},
-  "openings_cm": []
+  "openings_cm": [
+    {"room_id": "R1", "kind": "door", "width_cm": 88.9, "height_cm": 204.2},
+    {"room_id": "R1", "kind": "door", "width_cm": 88.9, "height_cm": 204.2},
+    {"room_id": "R1", "kind": "window", "width_cm": 70.0, "height_cm": 123.4, "sill_cm": 79.5},
+    {"room_id": "R1", "kind": "window", "width_cm": 70.0, "height_cm": 123.4, "sill_cm": 79.5}
+  ]
 }
