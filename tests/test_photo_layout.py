@@ -72,6 +72,7 @@ def test_infer_photo_adjacency_unit():
                             "id": "d1",
                             "kind": "door",
                             "width_m": {"value_m": 0.9},
+                            "height_m": {"value_m": 2.05},
                         }
                     ],
                 }
@@ -87,6 +88,7 @@ def test_infer_photo_adjacency_unit():
                             "id": "d2",
                             "kind": "door",
                             "width_m": {"value_m": 0.92},
+                            "height_m": {"value_m": 2.06},
                         }
                     ],
                 }

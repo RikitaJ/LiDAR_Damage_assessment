@@ -85,4 +85,5 @@ python -m eval.run --rerun   # runs the pipeline on each capture, writes docs/BE
 - Photo tier: without the optional Azure model it outputs a wide prior, not a measurement from the photos.
 - Calibration multipliers in `configs/calibration.json` were fitted on a synthetic test fixture, not on measured rooms.
 - Mirrors, glass, wet-look floors and low light have not been tested on real captures yet.
+- **Damage (Phase 5 v1):** heuristic RGB hints + rule-based concealed/scope only — no SAM or camera projection; see `pipeline_meta.limitations` in each `plan.json` and [docs/PHASE5_DAMAGE.md](docs/PHASE5_DAMAGE.md).
 - Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one with its sha256; `scripts/fetch_data.py` downloads them once their URLs are filled in.

@@ -12,6 +12,10 @@
 | Offline prior + optional Azure VLM (≤8 stills, L-shape walls, windows) | **Done** |
 | Multi-room layout §5.6 + **hub** multi-door inference | **Done** |
 | Doorway ORB verification warning | **Done** (`photo_door_verify.py`) |
+| Sparse MVS horizontal rescale (+ VLM median fuse) | **Done** (`photo_scale.py`) |
+| Door pairing width **and** height (§5.6) | **Done** (`photo_layout.py`) |
+| Drop weak inferred edges (ORB) before stitch | **Done** (`filter_inferred_photo_edges`) |
+| Camera-height + EXIF focal sanity cues | **Done** (`photo_metric.py`, `photo_exif.py`) |
 | Same JSON/PNG contract | **Done** |
 
 **Still Tester-owned (not pipeline GT):** ±8% wall / stitch footprint gates vs `data/ground_truth/`.

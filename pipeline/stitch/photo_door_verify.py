@@ -9,6 +9,44 @@ from pipeline.frontends.photo_pick import pick_spaced_photos
 from pipeline.tiers.photo_room_v0 import PHOTO_EXT
 
 
+def filter_inferred_photo_edges(
+    session: Session,
+    edges: list[tuple[str, str, str]],
+    *,
+    min_inliers: int = 12,
+) -> tuple[list[tuple[str, str, str]], list[str]]:
+    """Drop inferred adjacency edges with weak cross-room doorway ORB match."""
+    if session.tier.value != "photos" or not edges:
+        return edges, []
+    try:
+        import cv2
+    except ImportError:
+        return edges, ["photo: ORB edge filter skipped (opencv missing)"]
+
+    by_id = {rp.room_id: rp.lidar_dir for rp in session.rooms}
+    orb = cv2.ORB_create(600)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    kept: list[tuple[str, str, str]] = []
+    warnings: list[str] = []
+    for a, b, oid in edges:
+        pa = _photo_files(by_id.get(a))
+        pb = _photo_files(by_id.get(b))
+        if not pa or not pb:
+            kept.append((a, b, oid))
+            continue
+        best = 0
+        for ia in pick_spaced_photos(pa, 3):
+            for ib in pick_spaced_photos(pb, 3):
+                best = max(best, _match_inliers(cv2, orb, bf, ia, ib))
+        if best >= min_inliers:
+            kept.append((a, b, oid))
+        else:
+            warnings.append(
+                f"photo: dropped weak inferred edge {a}↔{b} ({best} ORB inliers < {min_inliers})"
+            )
+    return kept, warnings
+
+
 def verify_photo_adjacency(
     session: Session,
     edges: list[tuple[str, str, str]],

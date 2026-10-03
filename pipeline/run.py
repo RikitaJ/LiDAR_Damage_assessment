@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from pipeline.config import SCHEMA_PATH, InputTier, RunConfig
-from pipeline.damage.rules_v0 import build_scope_line_items, infer_damage_regions
+from pipeline.damage.phase5 import run_damage_pipeline
 from pipeline.export.output import render_plan, write_plan
 from pipeline.io.session import load_session
 from pipeline.io.validate import sanitize_room
@@ -34,10 +34,21 @@ def _has_roomplan_json(lidar_dir: Path) -> bool:
     return False
 
 
-def _parse_room_paths(rp, tier: InputTier, config: RunConfig) -> tuple[dict, list[str]]:
+def _parse_room_paths(
+    rp,
+    tier: InputTier,
+    config: RunConfig,
+    *,
+    allow_photo_mvs_rescale: bool = True,
+) -> tuple[dict, list[str]]:
     warnings: list[str] = []
     if tier == InputTier.PHOTOS:
-        return parse_photo_room(rp.lidar_dir, rp.room_id, rp.name)
+        return parse_photo_room(
+            rp.lidar_dir,
+            rp.room_id,
+            rp.name,
+            allow_mvs_rescale=allow_photo_mvs_rescale,
+        )
     if tier == InputTier.VIDEO:
         return parse_video_room(
             rp.lidar_dir, rp.room_id, rp.name, drift_correction=config.drift_correction
@@ -85,8 +96,11 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
 
     rooms_raw: list[dict] = []
     qa_warnings: list[str] = []
+    allow_photo_mvs = tier != InputTier.PHOTOS or len(session.rooms) == 1
     for rp in session.rooms:
-        r, w = _parse_room_paths(rp, tier, config)
+        r, w = _parse_room_paths(
+            rp, tier, config, allow_photo_mvs_rescale=allow_photo_mvs
+        )
         qa_warnings.extend(w)
         qa_warnings.extend(sanitize_room(r))
         orphans = r.pop("_orphan_openings", [])
@@ -95,10 +109,20 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         rooms_raw.append(r)
 
     apply_drift = config.drift_correction
+    adjacency_for_stitch = session.adjacency
+    if tier == InputTier.PHOTOS and not adjacency_for_stitch and len(rooms_raw) > 1:
+        from pipeline.stitch.photo_door_verify import filter_inferred_photo_edges
+        from pipeline.stitch.photo_layout import infer_photo_adjacency
+
+        inferred = infer_photo_adjacency(rooms_raw)
+        inferred, orb_filter_w = filter_inferred_photo_edges(session, inferred)
+        qa_warnings.extend(orb_filter_w)
+        adjacency_for_stitch = inferred
+
     rooms, stitched = stitch(
         rooms_raw,
         tier,
-        session.adjacency,
+        adjacency_for_stitch,
         config.loop_closure and apply_drift,
         drift_correction=apply_drift,
     )
@@ -118,14 +142,17 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
     if overlap > 0.05:
         qa_warnings.append(f"stitched room overlap {overlap:.3f} m²")
 
-    png = out_dir / "floorplan.png"
-    stitched["render_path"] = render_plan(stitched, rooms, png)
-
-    damage_regions, dmg_warn = infer_damage_regions(
-        rooms, qa_warnings, capture_dir.resolve(), tier
+    surfaces, damage_regions, concealed_flags, scope_items, dmg_warn, damage_limits = run_damage_pipeline(
+        rooms,
+        qa_warnings,
+        capture_dir.resolve(),
+        tier,
+        adjacency=session.adjacency,
     )
     qa_warnings.extend(dmg_warn)
-    scope_items = build_scope_line_items(qa_warnings, damage_regions, tier)
+
+    png = out_dir / "floorplan.png"
+    stitched["render_path"] = render_plan(stitched, rooms, png, damage_regions=damage_regions)
 
     payload = {
         "schema_version": "1.0.0",
@@ -133,9 +160,10 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         "input_tier": tier.value,
         "device": {"model": session.device_model, "has_lidar": session.has_lidar},
         "rooms": rooms,
+        "surfaces": surfaces,
         "stitched_plan": stitched,
         "damage_regions": damage_regions,
-        "concealed_damage_flags": _concealed_flags_from_qa(qa_warnings),
+        "concealed_damage_flags": concealed_flags,
         "scope_line_items": scope_items,
         "drift_handling": _drift_block(session, tier, config.loop_closure),
         "pipeline_meta": {
@@ -145,6 +173,7 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
             "models_used": _models_used(session, tier, rooms_raw),
             "qa_warnings": qa_warnings,
             "overlap_m2": round(overlap, 4),
+            "limitations": damage_limits,
         },
     }
 
@@ -202,15 +231,6 @@ def _video_used_depth_fusion(rooms: list[dict] | None) -> bool:
         if "stray_floor_occupancy" in notes or "stray_depth_planes" in notes:
             return True
     return False
-
-
-def _concealed_flags_from_qa(qa_warnings: list[str]) -> list[dict]:
-    flags: list[dict] = []
-    for w in qa_warnings:
-        low = w.lower()
-        if "r39" in low or "glass" in low or "mirror" in low or "sparse depth" in low:
-            flags.append({"severity": "review", "reason": w, "source": "qa_heuristic_v0"})
-    return flags
 
 
 def _models_used(session, tier: InputTier, rooms: list[dict] | None = None) -> list[str]:

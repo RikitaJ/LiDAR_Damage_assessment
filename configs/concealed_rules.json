@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "CD-01",
+      "description": "Water stain on wall with bottom edge below 0.3 m above floor — possible moisture wicking",
+      "match": { "class": "water_stain", "surface_type": "wall", "bottom_above_floor_m_max": 0.3 }
+    },
+    {
+      "id": "CD-02",
+      "description": "Water stain on ceiling — possible leak from above",
+      "match": { "class": "water_stain", "surface_type": "ceiling" }
+    },
+    {
+      "id": "CD-03",
+      "description": "Water stain on wall adjacent to wet-area room (when room label suggests bath/kitchen)",
+      "match": { "class": "water_stain", "surface_type": "wall", "adjacent_wet_room": true }
+    },
+    {
+      "id": "CD-04",
+      "description": "Mold visible — assume hidden growth beyond visible extent",
+      "match": { "class": "mold", "margin_m": 0.3 }
+    },
+    {
+      "id": "CD-05",
+      "description": "Diagonal crack from opening corner — possible settlement",
+      "match": { "class": "crack", "diagonal_from_opening": true }
+    }
+  ]
+}

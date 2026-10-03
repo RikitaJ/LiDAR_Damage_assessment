@@ -71,3 +71,37 @@ Metric `--tier video` on Stray folders uses odometry loop closure, then **depth 
 **Why:** Real scans showed ~78–231 m² single-room footprints and drift ablation Δ=0 m² because wall translation did not change area.
 
 **Rejected:** Post-hoc `apply_stray_loop_to_rooms` wall nudge only (kept as no-op for compatibility).
+
+## Phase 5 damage v1 (2026-04-03)
+
+**What:** `pipeline/damage/phase5.py` — net surfaces, RGB heuristics + optional Vision tags, JSON rules (`configs/concealed_rules.json`, `configs/scope_rules.json`), scope quantities with intervals; damage hatch on `floorplan.png`.
+
+**Why:** Brief R6–R8 require surface-keyed damage, rule IDs, and scope without reading GT; offline walk-in must still emit full contract.
+
+**Rejected:** Full SAM/detector stack in v1 (weights, latency); kept as heuristic + optional Azure with wide intervals until benchmark cache exists.
+
+**Limitations:** `pipeline_meta.limitations[]` lists static v1 gaps plus per-run flags (no RGB, photo tier poses, R39); heuristic damage intervals widened in code so thin input stays honest (rules 5 and 9).
+
+## Phase 5 damage v2 accuracy (2026-04-03)
+
+**What:** `.cache/damage/` per-image hits; `project.py` room-aware walls, UV from image fractions, IoU merge, Vision fuse, CD-05 from door/window anchors; optional Hough crack cue.
+
+**Why:** Brief §5.8 expects cache + surface-keyed regions; v1 default-wall placement was too weak for scoring and concealed rules.
+
+**Rejected:** SAM weights in-repo for this deadline; 3D projection without poses.
+
+## Phase 5 damage v3 accuracy (2026-04-03)
+
+**What:** Heuristic v2 (mask bbox, ceiling ROI, image-x wall index); optional `azure_damage_vlm` structured cues; 3 video frames; `refine_region_confidence` tightens σ on high-score VLM hits.
+
+**Why:** Better surface placement and extent without SAM; reuse Azure OpenAI keys already used for photo layout.
+
+**Rejected:** Full mask projection pipeline until per-frame poses exist at photo tier.
+
+## Phase 4 photo accuracy v2 (2026-04-03)
+
+**What:** Apply sparse MVS span scale to room geometry (fuse with VLM via median); door height in layout pairing; ORB-filter inferred edges before stitch; camera-height metric cue; EXIF missing-focal widens σ.
+
+**Why:** Brief §5.4–5.6: metric scale from multi-view + priors, not VLM alone; stitch disambiguation beyond door width.
+
+**Rejected:** Dense MapAnything front-end in-repo; hard-dropping manifest adjacency on weak ORB (manifest still trusted).

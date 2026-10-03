@@ -34,7 +34,20 @@ def exif_summary(photo_paths: list[Path]) -> tuple[dict, list[str]]:
             warnings.append(f"photo_exif: unreadable {p.name}")
     if not meta["samples"]:
         warnings.append("photo_exif: no readable images for intrinsics hint")
+    warnings.extend(focal_sanity_warnings(meta))
     return meta, warnings
+
+
+def focal_sanity_warnings(meta: dict) -> list[str]:
+    warnings: list[str] = []
+    saw_focal = False
+    for row in meta.get("samples") or []:
+        if row.get("FocalLengthIn35mmFilm") or row.get("FocalLength"):
+            saw_focal = True
+            break
+    if meta.get("samples") and not saw_focal:
+        warnings.append("photo_exif: no focal length in EXIF — default intrinsics; scale σ widened")
+    return warnings
 
 
 def intrinsics_matrix(meta: dict, *, default_focal_px: float = 900.0) -> "np.ndarray":

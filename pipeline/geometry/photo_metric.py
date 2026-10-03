@@ -5,7 +5,11 @@ from __future__ import annotations
 import statistics
 from typing import Any
 
-from pipeline.geometry.photo_priors import CEILING_PRIOR_M, DOOR_HEIGHT_PRIOR_M
+from pipeline.geometry.photo_priors import (
+    CAMERA_HEIGHT_REF_M,
+    CEILING_PRIOR_M,
+    DOOR_HEIGHT_PRIOR_M,
+)
 
 DOOR_REF_M = (DOOR_HEIGHT_PRIOR_M[0] + DOOR_HEIGHT_PRIOR_M[1]) / 2.0
 CEILING_REF_M = (CEILING_PRIOR_M[0] + CEILING_PRIOR_M[1]) / 2.0
@@ -38,7 +42,13 @@ def merge_vlm_estimates(estimates: list[dict]) -> dict | None:
     openings = [e.get("openings") for e in good if isinstance(e.get("openings"), list)]
     if openings:
         out["openings"] = max(openings, key=len)
-    for key in ("door_height_m", "main_door_image_height_fraction", "door_on_wall", "door_width_m"):
+    for key in (
+        "door_height_m",
+        "main_door_image_height_fraction",
+        "door_on_wall",
+        "door_width_m",
+        "camera_height_m",
+    ):
         vals = [e.get(key) for e in good if e.get(key) is not None]
         if vals:
             try:
@@ -66,6 +76,10 @@ def prior_metric_scale(est: dict) -> tuple[float, float, list[str]]:
         implied_door = ceil * frac
         if 1.35 <= implied_door <= 2.45:
             scales.append(DOOR_REF_M / implied_door)
+
+    cam_h = _optional_float(est.get("camera_height_m"))
+    if cam_h and 1.05 <= cam_h <= 1.85:
+        scales.append(CAMERA_HEIGHT_REF_M / cam_h)
 
     if not scales:
         return 1.0, 0.0, warnings

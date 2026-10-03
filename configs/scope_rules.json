@@ -1,0 +1,26 @@
+{
+  "mappings": [
+    {
+      "damage_class": "water_stain",
+      "surface_type": "wall",
+      "items": [
+        { "code": "STAIN-BLOCK-PRIME", "description": "Stain-blocking primer on affected wall", "quantity": "damage_area_m2" },
+        { "code": "PAINT-WALL", "description": "Repaint wall (net area minus openings)", "quantity": "surface_net_area_m2" }
+      ]
+    },
+    {
+      "damage_class": "crack",
+      "surface_type": "wall",
+      "items": [
+        { "code": "PATCH-WALL", "description": "Patch crack and surrounding margin", "quantity": "damage_area_with_margin_m2" }
+      ]
+    },
+    {
+      "damage_class": "water_stain",
+      "surface_type": "ceiling",
+      "items": [
+        { "code": "MOISTURE-INSP", "description": "Moisture inspection above ceiling", "quantity": "fixed_1" }
+      ]
+    }
+  ]
+}

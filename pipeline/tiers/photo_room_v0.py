@@ -18,7 +18,13 @@ from pipeline.geometry.photo_metric import (
     reject_implausible_estimate,
 )
 from pipeline.geometry.photo_rect import manhattan_room_from_wall_lengths, rectangle_room_from_wall_lengths
-from pipeline.geometry.photo_scale import combined_scale_sigma_rel, room_wall_span_m
+from pipeline.geometry.photo_scale import (
+    apply_horizontal_scale_to_room,
+    combined_scale_sigma_rel,
+    fuse_mvs_with_vlm_scale,
+    mvs_horizontal_scale,
+    room_wall_span_m,
+)
 from pipeline.geometry.photo_priors import CEILING_PRIOR_M
 from pipeline.measure.intervals import interval_notes, with_interval
 
@@ -27,7 +33,13 @@ DEFAULT_DOOR_WIDTH_M = 0.9
 MAX_VLM_PHOTOS = 8
 
 
-def parse_photo_room(room_dir: Path, room_id: str, name: str) -> tuple[dict[str, Any], list[str]]:
+def parse_photo_room(
+    room_dir: Path,
+    room_id: str,
+    name: str,
+    *,
+    allow_mvs_rescale: bool = True,
+) -> tuple[dict[str, Any], list[str]]:
     tier = InputTier.PHOTOS
     warnings: list[str] = []
     if not room_dir.is_dir():
@@ -117,17 +129,42 @@ def parse_photo_room(room_dir: Path, room_id: str, name: str) -> tuple[dict[str,
             pass
         ceil = float(room["ceiling_height_m"]["value_m"])
 
+    span = room_wall_span_m(room)
+    mvs_scale_applied = False
+    mvs_vlm_fused = False
+    mvs_factor, mvs_scale_w = mvs_horizontal_scale(span, mvs)
+    warnings.extend(mvs_scale_w)
+    if mvs_factor is not None and allow_mvs_rescale:
+        if vlm_used:
+            fused, fw = fuse_mvs_with_vlm_scale(mvs_factor)
+            warnings.extend(fw)
+            apply_horizontal_scale_to_room(room, fused, tier, notes="photo_mvs_vlm_fuse")
+            mvs_vlm_fused = abs(fused - 1.0) >= 0.03
+            mvs_scale_applied = True
+        else:
+            apply_horizontal_scale_to_room(room, mvs_factor, tier, notes="photo_mvs_sparse")
+            warnings.append(f"photo: sparse MVS horizontal scale ×{mvs_factor:.3f} applied")
+            mvs_scale_applied = True
+        span = room_wall_span_m(room)
+    elif mvs_factor is not None and not allow_mvs_rescale:
+        warnings.append(
+            "photo: MVS metric scale computed but not applied (multi-room — avoids stitch mismatch)"
+        )
+
+    exif_missing_focal = any("no focal length" in w for w in exif_warn)
     sigma_rel, scale_warn = combined_scale_sigma_rel(
         n if files else 4,
         vlm_used=vlm_used,
         ceiling_m=ceil,
         mvs=mvs,
-        room_span_m=room_wall_span_m(room),
+        room_span_m=span,
         metric_cue_spread=metric_spread,
+        mvs_scale_applied=mvs_scale_applied,
+        mvs_vlm_fused=mvs_vlm_fused,
     )
     warnings.extend(scale_warn)
-    if not vlm_used and mvs.n_triangulated >= 12:
-        warnings.append("photo: sparse multi-view scale cue applied (no dense depth model)")
+    if exif_missing_focal:
+        sigma_rel = min(0.38, sigma_rel + 0.06)
 
     _ensure_connector_door(room, room_id, tier, prefer_longest_wall=vlm_used)
     _widen_intervals_for_scale_sigma(room, tier, sigma_rel)

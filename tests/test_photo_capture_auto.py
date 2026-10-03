@@ -47,8 +47,8 @@ def test_hub_infers_two_edges():
                 {
                     "id": "w",
                     "openings": [
-                        {"id": "h1", "kind": "door", "width_m": {"value_m": 0.9}},
-                        {"id": "h2", "kind": "door", "width_m": {"value_m": 0.80}},
+                        {"id": "h1", "kind": "door", "width_m": {"value_m": 0.9}, "height_m": {"value_m": 2.05}},
+                        {"id": "h2", "kind": "door", "width_m": {"value_m": 0.80}, "height_m": {"value_m": 2.05}},
                     ],
                 }
             ],
@@ -58,7 +58,7 @@ def test_hub_infers_two_edges():
             "walls": [
                 {
                     "id": "w",
-                    "openings": [{"id": "l1", "kind": "door", "width_m": {"value_m": 0.91}}],
+                    "openings": [{"id": "l1", "kind": "door", "width_m": {"value_m": 0.91}, "height_m": {"value_m": 2.05}}],
                 }
             ],
         },
@@ -67,7 +67,7 @@ def test_hub_infers_two_edges():
             "walls": [
                 {
                     "id": "w",
-                    "openings": [{"id": "b1", "kind": "door", "width_m": {"value_m": 0.81}}],
+                    "openings": [{"id": "b1", "kind": "door", "width_m": {"value_m": 0.81}, "height_m": {"value_m": 2.05}}],
                 }
             ],
         },

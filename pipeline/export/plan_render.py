@@ -9,7 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def render_plan(stitched: dict, rooms: list[dict], out_png: Path) -> str:
+def render_plan(
+    stitched: dict,
+    rooms: list[dict],
+    out_png: Path,
+    *,
+    damage_regions: list[dict] | None = None,
+) -> str:
     fig, ax = plt.subplots(figsize=(14, 14))
     ax.set_aspect("equal")
     fp = stitched.get("footprint_area_m2") or {}
@@ -24,6 +30,9 @@ def render_plan(stitched: dict, rooms: list[dict], out_png: Path) -> str:
 
     for room in rooms:
         _draw_room(ax, room)
+
+    if damage_regions:
+        _draw_damage_markers(ax, rooms, damage_regions)
 
     for wall in stitched.get("global_walls", []):
         pl = wall.get("polyline_m") or []
@@ -103,6 +112,44 @@ def _draw_wall_with_openings(ax, p0: np.ndarray, p1: np.ndarray, openings: list,
         ax.plot([p0[0] + u[0] * cursor, p1[0]], [p0[1] + u[1] * cursor, p1[1]], "k-", lw=2.5, zorder=3)
     if not gaps:
         ax.plot([p0[0], p1[0]], [p0[1], p1[1]], "k-", lw=2.5, zorder=3)
+
+
+def _draw_damage_markers(ax, rooms: list[dict], damage_regions: list[dict]) -> None:
+    wall_map: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    for room in rooms:
+        tx, _, tz = room["pose_world"]["translation_m"]
+        offset = np.array([tx, tz], float)
+        for w in room.get("walls", []):
+            pl = w.get("polyline_m") or []
+            if len(pl) < 2:
+                continue
+            wall_map[w["id"]] = (np.array(pl[0], float) + offset, np.array(pl[1], float) + offset)
+
+    for dmg in damage_regions:
+        sid = dmg.get("surface_id") or ""
+        seg = wall_map.get(sid)
+        if seg is None:
+            continue
+        p0, p1 = seg
+        u = p1 - p0
+        length = float(np.linalg.norm(u))
+        if length < 1e-6:
+            continue
+        u = u / length
+        poly = dmg.get("polygon_surface") or [[0.1, 0.1], [0.4, 0.1]]
+        u0 = float(poly[0][0]) if poly else 0.1
+        u1 = float(poly[1][0]) if len(poly) > 1 else u0 + 0.3
+        t0, t1 = max(0.0, min(u0, u1) * length), min(length, max(u0, u1) * length)
+        if t1 <= t0:
+            t1 = min(length, t0 + 0.35)
+        perp = np.array([-u[1], u[0]]) * 0.06
+        a = p0 + u * t0
+        b = p0 + u * t1
+        xs = [a[0] - perp[0], b[0] - perp[0], b[0] + perp[0], a[0] + perp[0], a[0] - perp[0]]
+        ys = [a[1] - perp[1], b[1] - perp[1], b[1] + perp[1], a[1] + perp[1], a[1] - perp[1]]
+        cls = dmg.get("class", "damage")
+        color = "#8B4513" if cls == "water_stain" else "#444444"
+        ax.fill(xs, ys, color=color, alpha=0.45, hatch="///", zorder=7, label=cls)
 
 
 def _draw_door_arc(ax, a: np.ndarray, b: np.ndarray, u: np.ndarray) -> None:

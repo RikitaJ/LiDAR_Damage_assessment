@@ -10,20 +10,17 @@ from pipeline.geometry.overlap import pairwise_overlap_m2
 
 WALL_THICKNESS_M = 0.15
 DOOR_WIDTH_TOL_M = 0.25
+DOOR_HEIGHT_TOL_M = 0.35
+DEFAULT_DOOR_HEIGHT_M = 2.05
+
+# doors[room_id] -> list of (opening_id, width_m, height_m)
+DoorMap = dict[str, list[tuple[str, float, float]]]
 
 
 def infer_photo_adjacency(rooms: list[dict]) -> list[tuple[str, str, str]]:
-    """Pair doors by width agreement only (never folder names)."""
+    """Pair doors by width and height agreement (never folder names)."""
     ids = [r["room_id"] for r in rooms]
-    doors: dict[str, list[tuple[str, float]]] = {}
-    for r in rooms:
-        for w in r.get("walls", []):
-            for op in w.get("openings", []):
-                if op.get("kind") != "door":
-                    continue
-                doors.setdefault(r["room_id"], []).append(
-                    (op["id"], float(op["width_m"]["value_m"]))
-                )
+    doors = _collect_doors(rooms)
 
     candidates: list[tuple[float, str, str, str]] = []
     for i, a in enumerate(ids):
@@ -32,15 +29,26 @@ def infer_photo_adjacency(rooms: list[dict]) -> list[tuple[str, str, str]]:
             if not da or not db:
                 continue
             best = min(
-                ((oa, ob, abs(wa - wb)) for oa, wa in da for ob, wb in db),
+                (
+                    (oa, ob, _door_pair_cost(wa, ha, wb, hb))
+                    for oa, wa, ha in da
+                    for ob, wb, hb in db
+                ),
                 key=lambda t: t[2],
             )
-            oa, ob, err = best
-            if err > DOOR_WIDTH_TOL_M:
+            oa, ob, cost = best
+            if cost > DOOR_WIDTH_TOL_M + DOOR_HEIGHT_TOL_M:
+                continue
+            if not _door_pair_ok(
+                next(w for oid, w, _ in da if oid == oa),
+                next(h for oid, _, h in da if oid == oa),
+                next(w for oid, w, _ in db if oid == ob),
+                next(h for oid, _, h in db if oid == ob),
+            ):
                 continue
             if not _mutual_best_door(a, oa, b, ob, doors, ids):
                 continue
-            candidates.append((err, a, b, oa))
+            candidates.append((cost, a, b, oa))
 
     if not candidates:
         return []
@@ -62,8 +70,8 @@ def infer_photo_adjacency(rooms: list[dict]) -> list[tuple[str, str, str]]:
 
     hub = max(ids, key=lambda rid: len(doors.get(rid, [])))
     if len(doors.get(hub, [])) >= 2:
-        for oa, wa in doors[hub]:
-            partner = _nearest_door_partner(hub, oa, wa, doors, ids)
+        for oa, wa, ha in doors[hub]:
+            partner = _nearest_door_partner(hub, oa, wa, ha, doors, ids)
             b, ob = partner
             if not b or not _mutual_best_door(hub, oa, b, ob, doors, ids):
                 continue
@@ -87,18 +95,42 @@ def infer_photo_adjacency(rooms: list[dict]) -> list[tuple[str, str, str]]:
     return out
 
 
+def _collect_doors(rooms: list[dict]) -> DoorMap:
+    doors: DoorMap = {}
+    for r in rooms:
+        for w in r.get("walls", []):
+            for op in w.get("openings", []):
+                if op.get("kind") != "door":
+                    continue
+                try:
+                    width = float(op.get("width_m", {}).get("value_m", 0.9))
+                    height = float(op.get("height_m", {}).get("value_m", DEFAULT_DOOR_HEIGHT_M))
+                except (TypeError, ValueError, AttributeError):
+                    width, height = 0.9, DEFAULT_DOOR_HEIGHT_M
+                doors.setdefault(r["room_id"], []).append((op["id"], width, height))
+    return doors
+
+
+def _door_pair_cost(wa: float, ha: float, wb: float, hb: float) -> float:
+    return abs(wa - wb) + 0.55 * abs(ha - hb)
+
+
+def _door_pair_ok(wa: float, ha: float, wb: float, hb: float) -> bool:
+    return abs(wa - wb) <= DOOR_WIDTH_TOL_M and abs(ha - hb) <= DOOR_HEIGHT_TOL_M
+
+
 def _mutual_best_door(
     a: str,
     oa: str,
     b: str,
     ob: str,
-    doors: dict[str, list[tuple[str, float]]],
+    doors: DoorMap,
     ids: list[str],
 ) -> bool:
-    wa = next(w for oid, w in doors[a] if oid == oa)
-    wb = next(w for oid, w in doors[b] if oid == ob)
-    best_for_a = _nearest_door_partner(a, oa, wa, doors, ids)
-    best_for_b = _nearest_door_partner(b, ob, wb, doors, ids)
+    wa, ha = next((w, h) for oid, w, h in doors[a] if oid == oa)
+    wb, hb = next((w, h) for oid, w, h in doors[b] if oid == ob)
+    best_for_a = _nearest_door_partner(a, oa, wa, ha, doors, ids)
+    best_for_b = _nearest_door_partner(b, ob, wb, hb, doors, ids)
     return best_for_a == (b, ob) and best_for_b == (a, oa)
 
 
@@ -106,19 +138,20 @@ def _nearest_door_partner(
     room_id: str,
     opening_id: str,
     width_m: float,
-    doors: dict[str, list[tuple[str, float]]],
+    height_m: float,
+    doors: DoorMap,
     ids: list[str],
 ) -> tuple[str, str]:
     best: tuple[float, str, str] | None = None
     for other in ids:
         if other == room_id:
             continue
-        for oid, ow in doors.get(other, []):
-            diff = abs(width_m - ow)
-            if diff > DOOR_WIDTH_TOL_M:
+        for oid, ow, oh in doors.get(other, []):
+            if not _door_pair_ok(width_m, height_m, ow, oh):
                 continue
-            if best is None or diff < best[0] or (diff == best[0] and other < best[1]):
-                best = (diff, other, oid)
+            cost = _door_pair_cost(width_m, height_m, ow, oh)
+            if best is None or cost < best[0] or (cost == best[0] and other < best[1]):
+                best = (cost, other, oid)
     return (best[1], best[2]) if best else ("", "")
 
 
@@ -267,104 +300,123 @@ def _nudge_apart_if_overlap(
             for src, anchor in ((a, b), (b, a)):
                 if src not in poses or anchor not in poses:
                     continue
-                normal = _interior_normal(by_id[src], oid)
-                if normal is None:
+                n = _separation_normal(by_id[src], by_id[anchor], oid)
+                if n is None:
                     continue
-                da, db = _door_points(by_id[src], by_id[anchor], oid)
-                if da is None:
-                    continue
-                poses[src] = poses[anchor] + (db - da) + normal * (_room_span(by_id[src]) * 0.45)
-        for r in rooms:
-            rid = r["room_id"]
-            tx, tz = poses[rid]
-            r["pose_world"]["translation_m"] = [float(tx), 0.0, float(tz)]
+                poses[src] = poses[src] + n * 0.25
+    for r in rooms:
+        rid = r["room_id"]
+        tx, tz = poses[rid]
+        r["pose_world"]["translation_m"] = [float(tx), 0.0, float(tz)]
+
+
+def _separation_normal(src: dict, anchor: dict, opening_id: str) -> np.ndarray | None:
+    n = _interior_normal(src, opening_id)
+    if n is not None:
+        return n
+    return np.array([1.0, 0.0])
+
+
+def _centroid_local(room: dict) -> tuple[float, float]:
+    xs: list[float] = []
+    zs: list[float] = []
+    for w in room.get("walls", []):
+        for p in w.get("polyline_m") or []:
+            xs.append(float(p[0]))
+            zs.append(float(p[1]))
+    if not xs:
+        return 0.0, 0.0
+    return (min(xs) + max(xs)) / 2.0, (min(zs) + max(zs)) / 2.0
+
+
+def _room_span(room: dict) -> float:
+    xs: list[float] = []
+    zs: list[float] = []
+    for w in room.get("walls", []):
+        for p in w.get("polyline_m") or []:
+            xs.append(float(p[0]))
+            zs.append(float(p[1]))
+    if not xs:
+        return 3.0
+    return max(max(xs) - min(xs), max(zs) - min(zs), 2.0)
 
 
 def _door_points(
     src: dict, anchor: dict, opening_id: str
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
-    sd = _doors_local(src)
-    ad = _doors_local(anchor)
-    if not sd or not ad:
-        return None, None
-    for sid, sp, _ in sd:
-        if opening_id and sid == opening_id:
-            for _, ap, _ in ad:
-                return sp, ap
-    best = min(
-        ((sp, ap, abs(sw - aw)) for sid, sp, sw in sd for _, ap, aw in ad),
-        key=lambda t: t[2],
-    )
-    return best[0], best[1]
+    da = _opening_midpoint(src, opening_id)
+    db = _opening_midpoint(anchor, opening_id)
+    return da, db
 
 
-def _doors_local(room: dict) -> list[tuple[str, np.ndarray, float]]:
-    out: list[tuple[str, np.ndarray, float]] = []
+def _opening_midpoint(room: dict, opening_id: str) -> np.ndarray | None:
+    fallback: np.ndarray | None = None
     for w in room.get("walls", []):
-        pl = w.get("polyline_m") or []
-        if len(pl) < 2:
-            continue
         for op in w.get("openings", []):
-            if op.get("kind") != "door":
+            if op.get("kind") not in ("door", "passage"):
                 continue
-            if "anchor_m" in op:
-                pt = np.array(op["anchor_m"], dtype=float)
-            else:
-                p0, p1 = np.array(pl[0], float), np.array(pl[1], float)
-                pt = (p0 + p1) / 2
-            out.append((op["id"], pt, float(op["width_m"]["value_m"])))
-    return out
+            pt = _opening_point_on_wall(w, op)
+            if pt is None:
+                continue
+            if fallback is None:
+                fallback = pt
+            if opening_id and op.get("id") == opening_id:
+                return pt
+    return fallback
 
 
-def _door_width_mismatch(src: dict, anchor: dict, opening_id: str) -> float:
-    sd = _doors_local(src)
-    ad = _doors_local(anchor)
-    if not sd or not ad:
-        return 0.5
-    best = min(
-        abs(sw - aw) for _, _, sw in sd for _, _, aw in ad
-    )
-    return float(best)
+def _opening_point_on_wall(wall: dict, op: dict) -> np.ndarray | None:
+    if "anchor_m" in op:
+        a = op["anchor_m"]
+        return np.array([float(a[0]), float(a[1])], dtype=float)
+    pl = wall.get("polyline_m") or []
+    if len(pl) >= 2:
+        p0, p1 = np.array(pl[0], float), np.array(pl[1], float)
+        return (p0 + p1) / 2.0
+    return None
 
 
 def _interior_normal(room: dict, opening_id: str) -> np.ndarray | None:
     for w in room.get("walls", []):
-        pl = w.get("polyline_m") or []
-        if len(pl) < 2:
-            continue
         for op in w.get("openings", []):
-            if op.get("kind") != "door":
-                continue
             if opening_id and op.get("id") != opening_id:
                 continue
-            p0 = np.array(pl[0], dtype=float)
-            p1 = np.array(pl[1], dtype=float)
-            tangent = p1 - p0
-            tl = float(np.linalg.norm(tangent))
-            if tl < 1e-6:
+            if op.get("kind") not in ("door", "passage"):
                 continue
-            tangent = tangent / tl
-            normal = np.array([-tangent[1], tangent[0]], dtype=float)
-            mid = (p0 + p1) * 0.5
-            centroid = _centroid_local(room)
-            if np.dot(centroid - mid, normal) < 0:
-                normal = -normal
-            return normal
+            pl = w.get("polyline_m") or []
+            if len(pl) < 2:
+                return None
+            p0 = np.array(pl[0], float)
+            p1 = np.array(pl[1], float)
+            u = p1 - p0
+            length = float(np.linalg.norm(u))
+            if length < 1e-6:
+                return None
+            u = u / length
+            return np.array([-u[1], u[0]])
     return None
 
 
-def _centroid_local(room: dict) -> tuple[float, float]:
-    pts = [p for w in room.get("walls", []) for p in w.get("polyline_m", [])]
-    if not pts:
-        return 0.0, 0.0
-    arr = np.array(pts, dtype=float)
-    return float(arr[:, 0].mean()), float(arr[:, 1].mean())
+def _door_width_mismatch(src: dict, anchor: dict, opening_id: str) -> float:
+    ws = _door_width(src, opening_id)
+    wa = _door_width(anchor, opening_id)
+    if ws is None or wa is None:
+        return 0.5
+    return abs(ws - wa)
 
 
-def _room_span(room: dict) -> float:
-    pts = [p for w in room.get("walls", []) for p in w.get("polyline_m", [])]
-    if not pts:
-        return 3.0
-    xs = [p[0] for p in pts]
-    zs = [p[1] for p in pts]
-    return max(max(xs) - min(xs), max(zs) - min(zs), 2.5)
+def _door_width(room: dict, opening_id: str) -> float | None:
+    fallback: float | None = None
+    for w in room.get("walls", []):
+        for op in w.get("openings", []):
+            if op.get("kind") not in ("door", "passage"):
+                continue
+            try:
+                w_m = float(op.get("width_m", {}).get("value_m", 0.9))
+            except (TypeError, ValueError, AttributeError):
+                w_m = 0.9
+            if fallback is None:
+                fallback = w_m
+            if opening_id and op.get("id") == opening_id:
+                return w_m
+    return fallback
