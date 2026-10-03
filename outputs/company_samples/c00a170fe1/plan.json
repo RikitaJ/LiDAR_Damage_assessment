@@ -1,0 +1,1028 @@
+{
+  "schema_version": "1.0.0",
+  "capture_id": "c00a170fe1",
+  "input_tier": "lidar",
+  "device": {
+    "model": "Stray Scanner export",
+    "has_lidar": true
+  },
+  "rooms": [
+    {
+      "room_id": "R1",
+      "name": "room_1",
+      "floor_area_m2": {
+        "value_m": 23.004951292131675,
+        "value": 23.004951292131675,
+        "lo": 21.24902936990585,
+        "hi": 24.760873214357503,
+        "confidence": {
+          "sigma_m": 1.0674297399549098,
+          "tier_floor_m": 1.0674297399549098,
+          "notes": "stray_floor_occupancy"
+        }
+      },
+      "ceiling_height_m": {
+        "value_m": 2.8,
+        "value": 2.8,
+        "lo": 2.38,
+        "hi": 3.2199999999999998,
+        "confidence": {
+          "sigma_m": 0.2553191489361703,
+          "tier_floor_m": 0.2553191489361703,
+          "notes": "ceiling_not_observed_prior"
+        }
+      },
+      "walls": [
+        {
+          "id": "R1-W1",
+          "length_m": {
+            "value_m": 4.796347703423061,
+            "value": 4.796347703423061,
+            "lo": 4.7469977034230615,
+            "hi": 4.845697703423061,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              -2.6143139072814834,
+              -0.6311067018276476
+            ],
+            [
+              2.1820337961415777,
+              -0.6311067018276476
+            ]
+          ],
+          "openings": [
+            {
+              "id": "R1-O10",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.6258805774315461,
+                "value": 1.6258805774315461,
+                "lo": 1.3905181050425555,
+                "hi": 1.8612430498205368,
+                "confidence": {
+                  "sigma_m": 0.14307749081397605,
+                  "tier_floor_m": 0.14307749081397605,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W1",
+              "anchor_m": [
+                -1.8013736185657103,
+                -0.6311067018276476
+              ]
+            }
+          ]
+        },
+        {
+          "id": "R1-W2",
+          "length_m": {
+            "value_m": 4.796347703423061,
+            "value": 4.796347703423061,
+            "lo": 4.7469977034230615,
+            "hi": 4.845697703423061,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              2.1820337961415777,
+              -0.6311067018276476
+            ],
+            [
+              2.1820337961415777,
+              4.1652410015954136
+            ]
+          ],
+          "openings": [
+            {
+              "id": "R1-O245",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.1381164042020824,
+                "value": 1.1381164042020824,
+                "lo": 0.9733626735297889,
+                "hi": 1.3028701348743759,
+                "confidence": {
+                  "sigma_m": 0.10015424356978325,
+                  "tier_floor_m": 0.10015424356978325,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W2",
+              "anchor_m": [
+                2.1820337961415777,
+                3.5961827994943727
+              ]
+            }
+          ]
+        },
+        {
+          "id": "R1-W3",
+          "length_m": {
+            "value_m": 4.796347703423061,
+            "value": 4.796347703423061,
+            "lo": 4.7469977034230615,
+            "hi": 4.845697703423061,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              2.1820337961415777,
+              4.1652410015954136
+            ],
+            [
+              -2.6143139072814834,
+              4.1652410015954136
+            ]
+          ],
+          "openings": [
+            {
+              "id": "R1-O337",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.7884686351747008,
+                "value": 1.7884686351747008,
+                "lo": 1.5295699155468112,
+                "hi": 2.0473673548025904,
+                "confidence": {
+                  "sigma_m": 0.15738523989537367,
+                  "tier_floor_m": 0.15738523989537367,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W3",
+              "anchor_m": [
+                -1.7200795896941332,
+                4.1652410015954136
+              ]
+            }
+          ]
+        },
+        {
+          "id": "R1-W4",
+          "length_m": {
+            "value_m": 4.796347703423061,
+            "value": 4.796347703423061,
+            "lo": 4.7469977034230615,
+            "hi": 4.845697703423061,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              -2.6143139072814834,
+              4.1652410015954136
+            ],
+            [
+              -2.6143139072814834,
+              -0.6311067018276476
+            ]
+          ],
+          "openings": [
+            {
+              "id": "R1-O40",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.6258805774315461,
+                "value": 1.6258805774315461,
+                "lo": 1.3905181050425555,
+                "hi": 1.8612430498205368,
+                "confidence": {
+                  "sigma_m": 0.14307749081397605,
+                  "tier_floor_m": 0.14307749081397605,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W4",
+              "anchor_m": [
+                -2.6143139072814834,
+                3.3523007128796403
+              ]
+            },
+            {
+              "id": "R1-O423",
+              "kind": "door",
+              "width_m": {
+                "value_m": 0.7316462598441958,
+                "value": 0.7316462598441958,
+                "lo": 0.6257331472691501,
+                "hi": 0.8375593724192416,
+                "confidence": {
+                  "sigma_m": 0.06438487086628925,
+                  "tier_floor_m": 0.06438487086628925,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W4",
+              "anchor_m": [
+                -2.6143139072814834,
+                1.9296552076270377
+              ]
+            },
+            {
+              "id": "R1-O438",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.7071746063031235,
+                "value": 1.7071746063031235,
+                "lo": 1.4600440102946832,
+                "hi": 1.9543052023115637,
+                "confidence": {
+                  "sigma_m": 0.15023136535467488,
+                  "tier_floor_m": 0.15023136535467488,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W4",
+              "anchor_m": [
+                -2.6143139072814834,
+                0.22248060132391423
+              ]
+            }
+          ]
+        }
+      ],
+      "pose_world": {
+        "translation_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation_quat": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "R1-W1",
+      "type": "wall",
+      "room_id": "R1",
+      "wall_id": "R1-W1",
+      "net_area_m2": {
+        "value_m": 10.0967183858499,
+        "value": 10.0967183858499,
+        "lo": 9.904052805611112,
+        "hi": 10.289383966088689,
+        "confidence": {
+          "sigma_m": 0.11712193327585885,
+          "tier_floor_m": 0.11712193327585885,
+          "notes": "surface_net"
+        }
+      }
+    },
+    {
+      "id": "R1-W2",
+      "type": "wall",
+      "room_id": "R1",
+      "wall_id": "R1-W2",
+      "net_area_m2": {
+        "value_m": 11.096634940970302,
+        "value": 11.096634940970302,
+        "lo": 10.884888953026707,
+        "hi": 11.308380928913898,
+        "confidence": {
+          "sigma_m": 0.1287209653152555,
+          "tier_floor_m": 0.1287209653152555,
+          "notes": "surface_net"
+        }
+      }
+    },
+    {
+      "id": "R1-W3",
+      "type": "wall",
+      "room_id": "R1",
+      "wall_id": "R1-W3",
+      "net_area_m2": {
+        "value_m": 9.763412867476434,
+        "value": 9.763412867476434,
+        "lo": 9.57710742313925,
+        "hi": 9.94971831181362,
+        "confidence": {
+          "sigma_m": 0.11325558926272664,
+          "tier_floor_m": 0.11325558926272664,
+          "notes": "surface_net"
+        }
+      }
+    },
+    {
+      "id": "R1-W4",
+      "type": "wall",
+      "room_id": "R1",
+      "wall_id": "R1-W4",
+      "net_area_m2": {
+        "value_m": 5.097135610247898,
+        "value": 5.097135610247898,
+        "lo": 4.944479610247898,
+        "hi": 5.2497916102478985,
+        "confidence": {
+          "sigma_m": 0.0928,
+          "tier_floor_m": 0.0928,
+          "notes": "surface_net"
+        }
+      }
+    },
+    {
+      "id": "R1-ceiling",
+      "type": "ceiling",
+      "room_id": "R1",
+      "net_area_m2": {
+        "value_m": 23.004951292131675,
+        "value": 23.004951292131675,
+        "lo": 22.56597081157522,
+        "hi": 23.44393177268813,
+        "confidence": {
+          "sigma_m": 0.26685743498872744,
+          "tier_floor_m": 0.26685743498872744,
+          "notes": "surface_ceiling"
+        }
+      }
+    }
+  ],
+  "stitched_plan": {
+    "footprint_area_m2": {
+      "value_m": 23.004951292131672,
+      "value": 23.004951292131672,
+      "lo": 22.626519843376105,
+      "hi": 23.38338274088724,
+      "confidence": {
+        "sigma_m": 0.23004951292131673,
+        "tier_floor_m": 0.23004951292131673,
+        "notes": "footprint"
+      }
+    },
+    "adjacency": [],
+    "global_walls": [
+      {
+        "id": "R1_R1-W1",
+        "length_m": {
+          "value_m": 4.796347703423061,
+          "value": 4.796347703423061,
+          "lo": 4.7469977034230615,
+          "hi": 4.845697703423061,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            -2.6143139072814834,
+            -0.6311067018276476
+          ],
+          [
+            2.1820337961415777,
+            -0.6311067018276476
+          ]
+        ],
+        "openings": [
+          {
+            "id": "R1-O10",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.6258805774315461,
+              "value": 1.6258805774315461,
+              "lo": 1.3905181050425555,
+              "hi": 1.8612430498205368,
+              "confidence": {
+                "sigma_m": 0.14307749081397605,
+                "tier_floor_m": 0.14307749081397605,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W1",
+            "anchor_m": [
+              -1.8013736185657103,
+              -0.6311067018276476
+            ]
+          }
+        ]
+      },
+      {
+        "id": "R1_R1-W2",
+        "length_m": {
+          "value_m": 4.796347703423061,
+          "value": 4.796347703423061,
+          "lo": 4.7469977034230615,
+          "hi": 4.845697703423061,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            2.1820337961415777,
+            -0.6311067018276476
+          ],
+          [
+            2.1820337961415777,
+            4.1652410015954136
+          ]
+        ],
+        "openings": [
+          {
+            "id": "R1-O245",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.1381164042020824,
+              "value": 1.1381164042020824,
+              "lo": 0.9733626735297889,
+              "hi": 1.3028701348743759,
+              "confidence": {
+                "sigma_m": 0.10015424356978325,
+                "tier_floor_m": 0.10015424356978325,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W2",
+            "anchor_m": [
+              2.1820337961415777,
+              3.5961827994943727
+            ]
+          }
+        ]
+      },
+      {
+        "id": "R1_R1-W3",
+        "length_m": {
+          "value_m": 4.796347703423061,
+          "value": 4.796347703423061,
+          "lo": 4.7469977034230615,
+          "hi": 4.845697703423061,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            2.1820337961415777,
+            4.1652410015954136
+          ],
+          [
+            -2.6143139072814834,
+            4.1652410015954136
+          ]
+        ],
+        "openings": [
+          {
+            "id": "R1-O337",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.7884686351747008,
+              "value": 1.7884686351747008,
+              "lo": 1.5295699155468112,
+              "hi": 2.0473673548025904,
+              "confidence": {
+                "sigma_m": 0.15738523989537367,
+                "tier_floor_m": 0.15738523989537367,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W3",
+            "anchor_m": [
+              -1.7200795896941332,
+              4.1652410015954136
+            ]
+          }
+        ]
+      },
+      {
+        "id": "R1_R1-W4",
+        "length_m": {
+          "value_m": 4.796347703423061,
+          "value": 4.796347703423061,
+          "lo": 4.7469977034230615,
+          "hi": 4.845697703423061,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            -2.6143139072814834,
+            4.1652410015954136
+          ],
+          [
+            -2.6143139072814834,
+            -0.6311067018276476
+          ]
+        ],
+        "openings": [
+          {
+            "id": "R1-O40",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.6258805774315461,
+              "value": 1.6258805774315461,
+              "lo": 1.3905181050425555,
+              "hi": 1.8612430498205368,
+              "confidence": {
+                "sigma_m": 0.14307749081397605,
+                "tier_floor_m": 0.14307749081397605,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W4",
+            "anchor_m": [
+              -2.6143139072814834,
+              3.3523007128796403
+            ]
+          },
+          {
+            "id": "R1-O423",
+            "kind": "door",
+            "width_m": {
+              "value_m": 0.7316462598441958,
+              "value": 0.7316462598441958,
+              "lo": 0.6257331472691501,
+              "hi": 0.8375593724192416,
+              "confidence": {
+                "sigma_m": 0.06438487086628925,
+                "tier_floor_m": 0.06438487086628925,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W4",
+            "anchor_m": [
+              -2.6143139072814834,
+              1.9296552076270377
+            ]
+          },
+          {
+            "id": "R1-O438",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.7071746063031235,
+              "value": 1.7071746063031235,
+              "lo": 1.4600440102946832,
+              "hi": 1.9543052023115637,
+              "confidence": {
+                "sigma_m": 0.15023136535467488,
+                "tier_floor_m": 0.15023136535467488,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W4",
+            "anchor_m": [
+              -2.6143139072814834,
+              0.22248060132391423
+            ]
+          }
+        ]
+      }
+    ],
+    "render_path": "outputs\\company_samples\\c00a170fe1\\floorplan.png",
+    "drift_correction_applied": true
+  },
+  "damage_regions": [
+    {
+      "id": "D1",
+      "surface_id": "R1-W1",
+      "class": "water_stain",
+      "polygon_surface": [
+        [
+          0.0,
+          0.05
+        ],
+        [
+          4.410341637207993,
+          0.05
+        ],
+        [
+          4.410341637207993,
+          1.59
+        ],
+        [
+          0.0,
+          1.59
+        ]
+      ],
+      "area_m2": {
+        "value_m": 6.7919261213003095,
+        "value": 6.7919261213003095,
+        "lo": 1.9564182585577052,
+        "hi": 11.627433984042913,
+        "confidence": {
+          "sigma_m": 2.9395184575942883,
+          "tier_floor_m": 2.9395184575942883,
+          "notes": "hsv_stain_heuristic_v2+agree+sam_fast_hsv_v1+multi_view; heuristic_widen"
+        }
+      },
+      "width_m": {
+        "value_m": 4.410341637207993,
+        "value": 4.410341637207993,
+        "lo": 0.24180037622298922,
+        "hi": 8.578882898192997,
+        "confidence": {
+          "sigma_m": 2.534067635857145,
+          "tier_floor_m": 2.534067635857145,
+          "notes": "hsv_stain_heuristic_v2+agree+sam_fast_hsv_v1+multi_view; heuristic_widen"
+        }
+      },
+      "height_m": {
+        "value_m": 1.54,
+        "value": 1.54,
+        "lo": -2.3992714916308295,
+        "hi": 5.479271491630829,
+        "confidence": {
+          "sigma_m": 2.3946939158850027,
+          "tier_floor_m": 2.3946939158850027,
+          "notes": "hsv_stain_heuristic_v2+agree+sam_fast_hsv_v1+multi_view; heuristic_widen"
+        }
+      },
+      "bottom_above_floor_m": {
+        "value_m": 0.05,
+        "value": 0.05,
+        "lo": -0.16158812500000003,
+        "hi": 0.26158812500000006,
+        "confidence": {
+          "sigma_m": 0.12862500000000002,
+          "tier_floor_m": 0.12862500000000002,
+          "notes": "hsv_stain_heuristic_v2+agree+sam_fast_hsv_v1+multi_view; heuristic_widen"
+        }
+      },
+      "score": 0.78,
+      "source": "hsv_stain_heuristic_v2+agree+sam_fast_hsv_v1+multi_view",
+      "view_count": 3
+    },
+    {
+      "id": "D2",
+      "surface_id": "R1-W1",
+      "class": "crack",
+      "polygon_surface": [
+        [
+          2.0615301972775244,
+          0.1125000000000001
+        ],
+        [
+          2.5004959360512222,
+          0.1125000000000001
+        ],
+        [
+          2.5004959360512222,
+          0.42864768885026605
+        ],
+        [
+          2.0615301972775244,
+          0.42864768885026605
+        ]
+      ],
+      "area_m2": {
+        "value_m": 0.13877800379775415,
+        "value": 0.13877800379775415,
+        "lo": 0.01828663878242627,
+        "hi": 0.25926936881308205,
+        "confidence": {
+          "sigma_m": 0.07324703040445464,
+          "tier_floor_m": 0.07324703040445464,
+          "notes": "hough_crack_heuristic_v2+sam_fast_hsv_v1; heuristic_widen"
+        }
+      },
+      "width_m": {
+        "value_m": 0.4389657387736978,
+        "value": 0.4389657387736978,
+        "lo": 0.3350938723811738,
+        "hi": 0.5428376051662218,
+        "confidence": {
+          "sigma_m": 0.06314399172797815,
+          "tier_floor_m": 0.06314399172797815,
+          "notes": "hough_crack_heuristic_v2+sam_fast_hsv_v1; heuristic_widen"
+        }
+      },
+      "height_m": {
+        "value_m": 0.31614768885026595,
+        "value": 0.31614768885026595,
+        "lo": 0.21798877510933073,
+        "hi": 0.41430660259120117,
+        "confidence": {
+          "sigma_m": 0.05967107218293934,
+          "tier_floor_m": 0.05967107218293934,
+          "notes": "hough_crack_heuristic_v2+sam_fast_hsv_v1; heuristic_widen"
+        }
+      },
+      "bottom_above_floor_m": {
+        "value_m": 0.1125000000000001,
+        "value": 0.1125000000000001,
+        "lo": -0.09908812499999994,
+        "hi": 0.32408812500000017,
+        "confidence": {
+          "sigma_m": 0.12862500000000002,
+          "tier_floor_m": 0.12862500000000002,
+          "notes": "hough_crack_heuristic_v2+sam_fast_hsv_v1; heuristic_widen"
+        }
+      },
+      "score": 0.54,
+      "source": "hough_crack_heuristic_v2+sam_fast_hsv_v1",
+      "view_count": 1,
+      "diagonal_from_opening": true
+    }
+  ],
+  "concealed_damage_flags": [
+    {
+      "id": "F-1",
+      "rule_id": "CD-01",
+      "rule": "Water stain on wall with bottom edge below 0.3 m above floor \u2014 possible moisture wicking",
+      "triggered_by": [
+        "D1"
+      ],
+      "surfaces": [
+        "R1-W1"
+      ],
+      "rationale": "CD-01: class=water_stain surface=R1-W1"
+    },
+    {
+      "id": "F-2",
+      "rule_id": "CD-05",
+      "rule": "Diagonal crack from opening corner \u2014 possible settlement",
+      "triggered_by": [
+        "D2"
+      ],
+      "surfaces": [
+        "R1-W1"
+      ],
+      "rationale": "CD-05: class=crack surface=R1-W1"
+    }
+  ],
+  "scope_line_items": [
+    {
+      "id": "S1",
+      "surface_id": "R1-W1",
+      "code": "STAIN-BLOCK-PRIME",
+      "description": "Stain-blocking primer on affected wall",
+      "unit": "m2",
+      "quantity": {
+        "value_m": 6.7919261213003095,
+        "value": 6.7919261213003095,
+        "lo": 3.551837765133997,
+        "hi": 10.032014477466621,
+        "confidence": {
+          "sigma_m": 1.9696585751770896,
+          "tier_floor_m": 1.9696585751770896,
+          "notes": "scope_damage"
+        }
+      },
+      "because": [
+        "D1",
+        "F-1",
+        "F-2"
+      ]
+    },
+    {
+      "id": "S2",
+      "surface_id": "R1-W1",
+      "code": "PAINT-WALL",
+      "description": "Repaint wall (net area minus openings)",
+      "unit": "m2",
+      "quantity": {
+        "value_m": 10.0967183858499,
+        "value": 10.0967183858499,
+        "lo": 9.904052805611112,
+        "hi": 10.289383966088689,
+        "confidence": {
+          "sigma_m": 0.11712193327585885,
+          "tier_floor_m": 0.11712193327585885,
+          "notes": "surface_net"
+        }
+      },
+      "because": [
+        "D1",
+        "F-1",
+        "F-2"
+      ]
+    },
+    {
+      "id": "S3",
+      "surface_id": "R1-W1",
+      "code": "PATCH-WALL",
+      "description": "Patch crack and surrounding margin",
+      "unit": "m2",
+      "quantity": {
+        "value_m": 0.2730367633730014,
+        "value": 0.2730367633730014,
+        "lo": 0.16883501299932915,
+        "hi": 0.3772385137466737,
+        "confidence": {
+          "sigma_m": 0.06334452910253634,
+          "tier_floor_m": 0.06334452910253634,
+          "notes": "scope_patch"
+        }
+      },
+      "because": [
+        "D2",
+        "F-1",
+        "F-2"
+      ]
+    },
+    {
+      "id": "S-moist-1",
+      "surface_id": "R1-W1",
+      "code": "MOISTURE-INSP",
+      "description": "Moisture inspection (concealed-damage rule)",
+      "unit": "each",
+      "quantity": {
+        "value_m": 1.0,
+        "value": 1.0,
+        "lo": 0.999998355,
+        "hi": 1.000001645,
+        "confidence": {
+          "sigma_m": 0.0,
+          "tier_floor_m": 0.0,
+          "notes": "concealed_CD-01"
+        }
+      },
+      "because": [
+        "F-1",
+        "D1"
+      ]
+    }
+  ],
+  "drift_handling": {
+    "method": "stray_loop_closure+door_graph",
+    "loop_closure_enabled": true,
+    "description": "Stray: odometry loop nudge; multi-room door graph with overlap-only separation.",
+    "pose_graph_notes": "Drift on applies loop shift + stitch correction."
+  },
+  "pipeline_meta": {
+    "command": "housefloor run --capture <capture_dir>",
+    "capture_dir": "c00a170fe1",
+    "duration_s": 5.55,
+    "models_used": [
+      "stray_scanner_v0",
+      "trajectory_or_depth_geometry"
+    ],
+    "qa_warnings": [
+      "stray pose loop-closure gap 3.177 m (correction scale=0.550)",
+      "ceiling not observed in the scan; reporting the 2.4-3.2 m prior with a wide interval",
+      "damage: 3 image cue(s) from .cache/damage",
+      "damage: region D1 confirmed on 3 views"
+    ],
+    "overlap_m2": 0.0,
+    "limitations": [
+      "damage_v7: fast SAM-family refine (HSV crop + optional MobileSAM); optional Azure Vision / damage VLM",
+      "damage_v7: mask bbox \u2192 wall UV via camera rays (EXIF/ordinal pose sync + unix odometry match; else EXIF standoff)",
+      "damage_v2: multi-frame merge is 2D UV IoU on surface, not mask fusion in 3D",
+      "damage_v2: CD-03 (wet-room adjacency) fires only when room names or manifest adjacency imply bath/kitchen",
+      "damage_v2: per-image cues cached under .cache/damage/ (detector version pinned)",
+      "damage_v2: scope quantities are rule-derived from provisional damage, not verified repair takeoff"
+    ]
+  }
+}
