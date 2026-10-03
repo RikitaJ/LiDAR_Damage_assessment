@@ -1,72 +1,34 @@
 # LiDAR_Damage_assessment
 
-Multi-tier floor plans: **RoomPlan LiDAR**, **Stray Scanner** depth, and **video v0** → stitch, QA gates, intervals.  
-Phases 1–3 run **offline** (no API keys). Azure is for **Phase 4+** only — see [docs/AZURE_WHEN_NEEDED.md](docs/AZURE_WHEN_NEEDED.md).
+Phone-based property inspection. One command turns an iPhone capture (a Stray Scanner LiDAR scan, per-room photos or a walkthrough video) into a dimensioned floor plan with a 90 % interval on every measurement, plus damage regions, concealed-damage flags and scope line items. The output is `plan.json` and a rendered `floorplan.png`. It runs offline; no API keys are needed.
 
-Brief: [docs/ASSESSMENT_BRIEF.md](docs/ASSESSMENT_BRIEF.md) · Phases: [docs/PHASES.md](docs/PHASES.md)
+[Capture protocol](docs/CAPTURE_PROTOCOL.md) · [Compliance matrix](docs/COMPLIANCE_MATRIX.md) · [Benchmark report](docs/BENCHMARK_REPORT.md) · [Device matrix](docs/DEVICE_MATRIX.md) · [Fix loop](fixloop/POSTMORTEM.md) · [Brief](docs/ASSESSMENT_BRIEF.md)
 
-## Setup
+## Quick start
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\activate
+.\.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
+housefloor run --capture data\captures\<capture_id> --tier auto --out out\<capture_id>
 ```
 
-Optional Azure (after `az login`):
+Put each capture in `data/captures/<capture_id>/` as shown in the operator table of the [capture protocol](docs/CAPTURE_PROTOCOL.md), or download ours with `python scripts/fetch_data.py` (see `data/manifest.csv`). The tier is detected from the folder contents.
+
+Optional extras:
+- MobileSAM damage segmentation needs PyTorch and the `mobile_sam` package (not in the default install) plus its weights from `python scripts/fetch_weights.py`.
+- Azure hooks are off by default; see [docs/AZURE_WHEN_NEEDED.md](docs/AZURE_WHEN_NEEDED.md).
+
+## Reproduce our numbers
 
 ```powershell
-python scripts/_write_env_from_consolidated.py
+python -m eval.run --rerun --readme README.md --summary-into docs/DEVICE_MATRIX.md   # benchmark report, B1 table, device matrix
+bash fixloop/run.sh                                                                   # fix-loop runs from the tags
+bash scripts/run_company_samples.sh                                                   # outputs on the company samples
+$env:MPLBACKEND='Agg'; pytest tests -q                                                # tests
 ```
 
-## Capture data
-
-Real scans live under **`data/captures/<capture_id>/`** (not in git). See [data/README.md](data/README.md) and `data/manifest.csv` for downloads.
-
-```powershell
-housefloor run --capture data\captures\<your_capture_id>
-housefloor run --capture data\captures\<your_capture_id> --tier auto
-```
-
-## Import Apple exports
-
-```powershell
-housefloor import-apple --input C:\path\to\json_folder --out data\captures\my_house
-housefloor run --capture data\captures\my_house
-```
-
-## Gates (Phase 2)
-
-Requires a local capture plus optional `ground_truth.json` next to the capture or passed to `score`.
-
-```powershell
-housefloor score --capture data\captures\<id>
-housefloor ablate-drift --capture data\captures\<id>
-```
-
-## Tests
-
-Uses **pytest fixtures only** (no bundled demo house in the repo):
-
-```powershell
-$env:MPLBACKEND='Agg'; pytest tests -q
-```
-
-## Scoring (ground truth)
-
-Fill `data/ground_truth/<capture_id>.json` with **measured** values, then:
-
-```powershell
-python -m eval.cli score --capture single_room\c00a170fe1 --plan single_room\c00a170fe1\out_stray_v3\plan.json --tier lidar
-```
-
-Pipeline never reads GT; calibration multipliers live in `configs/calibration.json`.
-
-Benchmark report and the B1 table below, for every capture in `data/manifest.csv` with measured ground truth:
-
-```powershell
-python -m eval.run --rerun --readme README.md --summary-into docs/DEVICE_MATRIX.md
-```
+The pipeline never reads ground truth: tape values live in `data/ground_truth/` and only `eval/` uses them. Other commands are `housefloor import-apple`, `score` and `ablate-drift` (see `housefloor --help`).
 
 ## Constraints and limitations
 
@@ -107,10 +69,26 @@ Gates: Wall 1 ±2 cm: pass; Wall 2 ±2 cm: miss by 1.9 cm; Wall 3 ±2 cm: pass; 
 - *Photo tier.* EXIF in iPhone HEIC photos is not read yet, so the tier falls back to a prior instead of measuring. Next: HEIC decoding, then score `photos_B1_1x` and `photos_B1_05x`.
 - *Video tier.* A plain iPhone video has no metric scale yet. On Stray Scanner captures the tier reuses LiDAR odometry and depth, so those results are not video-only.
 - *Benchmark coverage.* No multi-room capture with a connector, and no room with staged damage.
-- *Damage (Phase 5 v1).* Heuristic RGB hints and rule-based concealed-damage flags and scope only, with no SAM or camera projection; see `pipeline_meta.limitations` in each `plan.json` and [docs/PHASE5_DAMAGE.md](docs/PHASE5_DAMAGE.md).
+- *Damage.* Heuristic RGB detection (refined with MobileSAM only when it is installed, which none of our results used), then projected onto walls through the camera; concealed-damage flags and scope follow fixed rules. It has not been validated against staged damage. See `pipeline_meta.limitations` in each `plan.json` and [docs/PHASE5_DAMAGE.md](docs/PHASE5_DAMAGE.md).
 - *Calibration.* Multipliers in `configs/calibration.json` were fitted on a synthetic test fixture, not on measured rooms.
 - *Hard surfaces.* Mirrors, glass, wet-look floors and low light have not been tested on real captures.
 
 **Ground-truth method and limits.** Steel tape, two people. Room length and width were read once each, and opposite walls are assumed equal. The ceiling was read twice, hanging the tape from a stool. Both doors share one size, and so do both windows; each size was taped once. Not done from the brief's method: two readings per wall at 1 m height, and door jamb depths. Every value and assumption is in `data/ground_truth/lidar_B1_rep1.json`.
 
 Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one with its sha256, and `scripts/fetch_data.py` downloads them once their URLs are filled in.
+
+## Models, apps and APIs used
+
+- **Stray Scanner** (iOS App Store) records the LiDAR tier: depth, confidence, poses and intrinsics.
+- **OpenCV** and **Shapely** provide image processing and geometry.
+- **MobileSAM** can refine damage masks when PyTorch, `mobile_sam` and its weights (`scripts/fetch_weights.py`) are installed. It is optional, and none of the results reported here used it.
+- **Azure OpenAI** hooks exist in `pipeline/integrations/` for photo layout and damage hints. They are off unless a `.env` provides keys, and they were off for every result reported here.
+- **magicplan** 2026.38.0 was used only for the head-to-head comparison.
+
+## Team and contributions
+
+We are a two-person team, as agreed with the recruiter.
+- **Rikita (`RikitaJ`)**, Builder: the pipeline, meaning the LiDAR, photo and video tiers, stitching, damage detection, rules and scope (`pipeline/`). Her commits are authored as `sshahi807`.
+- **Sai Praneeth Boggula**, Tester: the B1 captures at all three tiers, the tape ground truth and the magicplan scan, the evaluation (`eval/`), the fix loop (`fixloop/`) and the documentation (`docs/`).
+
+We used AI coding assistants: Cursor (Builder) and Claude Code (Tester). Their co-author trailers are kept in the commits.
