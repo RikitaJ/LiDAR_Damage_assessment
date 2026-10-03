@@ -264,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
             gts[path.stem] = data
 
     head = git("rev-parse", "--short", "HEAD") or "unknown"
-    versions = [(git("rev-parse", "--short", ref) or ref, ref) for ref in args.ref]
+    versions = [(git("rev-parse", "--short", f"{ref}^{{commit}}") or ref, ref) for ref in args.ref]
     if not args.skip_current:
         versions.append((head, None))
     command = ("python -m eval.run" + (" --rerun" if args.rerun else "") + "".join(f" --ref {r}" for r in args.ref)
@@ -296,7 +296,12 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 plan = json.loads(plan_path.read_text(encoding="utf-8"))
                 tier = plan.get("input_tier", "lidar")
-                version = f"pipeline at `{label}`" + (" (current)" if ref is None else "")
+                if ref is None:
+                    version = f"pipeline at `{label}` (current)"
+                elif label.startswith(ref):
+                    version = f"pipeline at `{label}`"
+                else:
+                    version = f"pipeline at `{ref}` (`{label}`)"
                 scored = score_plan(plan, gt)
                 summary.append(summary_row(f"{cid} ({tier}), {version}", scored))
                 headlines.append(headline(f"{cid}, {version}", scored))
