@@ -55,14 +55,14 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 | R32 | Reproduction bundle | `eval/run.py`, `fixloop/run.sh`, `scripts/fetch_data.py`, `data/manifest.csv` | regenerated report and fix loop | partial | Every reported number regenerates from raw captures. The manifest still needs the Drive download links. |
 | R33 | Benchmark report: all tiers, repeatability, head-to-head, timing | `docs/BENCHMARK_REPORT.md` | report | partial | LiDAR gates, head-to-head and timing are there. Repeatability and the photo and video tiers are not. |
 | R34 | Fix-loop bundle | `fixloop/` | see R27 | done | |
-| R35 | Technical report, 6 pages max | — | — | missing | |
+| R35 | Technical report, 6 pages max | `docs/TECHNICAL_REPORT.md` | report (3 A4 pages) | done | Covers architecture, tiers and devices, drift, error budget, calibration, the fix loop and failure modes. |
 | R36 | Raw benchmark data: sensor logs, ground truth, app exports | `data/manifest.csv`, `data/ground_truth/`, `data/app_exports/` | Drive files with sha256 | partial | Download links pending; the magicplan export needs a paid plan. |
 
 ## Constraints and the walk-in
 
 | ID | Requirement | File path | Artifact | Status | Notes |
 |---|---|---|---|---|---|
-| R37 | Handheld capture; models and APIs disclosed; no own infrastructure | `scripts/fetch_weights.py`, `pipeline/integrations/` | — | partial | Offline by default. The optional Azure OpenAI hooks would call our own Azure deployment, so they stay off. A disclosure section is still to be written. |
+| R37 | Handheld capture; models and APIs disclosed; no own infrastructure | `README.md` (Models, apps and APIs used), `pipeline/integrations/` | disclosure list | done | Every reported result was produced offline. The optional Azure OpenAI hooks would call our own Azure deployment, so they stay off. |
 | R38 | Weights and large binaries fetched by script | `scripts/fetch_weights.py`, `scripts/fetch_data.py` | — | partial | `fetch_weights.py` has no sha256 check. A 41.7 MB `rgb.mp4` remains in early history; it was removed from the tree in `52c7f46`. |
 | R39 | Mirrors, glass, wet-look surfaces, low light | `pipeline/geometry/hard_surfaces.py`, `pipeline/damage/sanitize.py` | warnings, widened intervals | partial | Filters exist; not tested on real hard-surface captures. |
 | R40 | Walk-in: unseen space, their iPhone, live run | `README.md` | — | partial | The LiDAR tier is ready. The photo tier (HEIC) and video tier (scale) are weak (R2). |

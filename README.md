@@ -2,7 +2,7 @@
 
 Phone-based property inspection. One command turns an iPhone capture (a Stray Scanner LiDAR scan, per-room photos or a walkthrough video) into a dimensioned floor plan with a 90 % interval on every measurement, plus damage regions, concealed-damage flags and scope line items. The output is `plan.json` and a rendered `floorplan.png`. It runs offline; no API keys are needed.
 
-[Capture protocol](docs/CAPTURE_PROTOCOL.md) · [Compliance matrix](docs/COMPLIANCE_MATRIX.md) · [Benchmark report](docs/BENCHMARK_REPORT.md) · [Device matrix](docs/DEVICE_MATRIX.md) · [Fix loop](fixloop/POSTMORTEM.md) · [Brief](docs/ASSESSMENT_BRIEF.md)
+[Capture protocol](docs/CAPTURE_PROTOCOL.md) · [Compliance matrix](docs/COMPLIANCE_MATRIX.md) · [Benchmark report](docs/BENCHMARK_REPORT.md) · [Device matrix](docs/DEVICE_MATRIX.md) · [Technical report](docs/TECHNICAL_REPORT.md) · [Fix loop](fixloop/POSTMORTEM.md) · [Brief](docs/ASSESSMENT_BRIEF.md)
 
 ## Quick start
 
