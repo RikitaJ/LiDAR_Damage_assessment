@@ -231,6 +231,7 @@ def _apply_vlm_estimate(
             wall_idx = -1
         if 0 <= wall_idx < len(rebuilt["walls"]):
             _add_door(rebuilt, wall_idx, room_id, tier, est.get("door_width_m"))
+            rebuilt["_photo_door_wall_id"] = rebuilt["walls"][wall_idx]["id"]
     return rebuilt
 
 

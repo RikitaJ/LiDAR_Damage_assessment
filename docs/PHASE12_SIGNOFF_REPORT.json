@@ -1,22 +1,32 @@
 {
   "phase": "1-2",
-  "executed": "2026-10-03",
   "runs": [
     {
       "check": "lidar_two_room_fixture",
       "status": "ok",
-      "footprint_m2": 17.1,
-      "notes": "All LiDAR gates pass vs data/ground_truth/lidar_two_room_fixture.json"
+      "gates_passed": {
+        "opening_85pct_2cm": true,
+        "ceiling_1p5cm": true,
+        "ceiling_repeat_spread_1cm": true,
+        "footprint_tier": true,
+        "walls_tier": true,
+        "stitch_no_overlap": true,
+        "calibration_sane": true
+      },
+      "footprint_m2": 17.099999999999998
     },
     {
       "check": "stray_mini_capture",
       "status": "ok",
-      "models": ["stray_scanner_v0", "trajectory_or_depth_geometry"]
+      "models": [
+        "stray_scanner_v0",
+        "trajectory_or_depth_geometry"
+      ]
     },
     {
       "check": "drift_ablation",
-      "status": "ok"
+      "status": "ok",
+      "delta_m2": 1.5290594660811188
     }
-  ],
-  "pytest": "51 passed (MPLBACKEND=Agg)"
+  ]
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -10,6 +11,34 @@ try:
 except ImportError:  # pragma: no cover
     Image = None  # type: ignore
     TAGS = {}
+
+
+def image_timestamp_s(path: Path) -> float | None:
+    """Best-effort capture time (Unix s) from EXIF or file mtime."""
+    path = Path(path)
+    if Image is None or not path.is_file():
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return None
+    try:
+        with Image.open(path) as im:
+            exif = im.getexif()
+            if exif:
+                for tag_id, val in exif.items():
+                    if TAGS.get(tag_id) not in ("DateTimeOriginal", "DateTime"):
+                        continue
+                    raw = str(val).strip()
+                    try:
+                        return datetime.strptime(raw, "%Y:%m:%d %H:%M:%S").timestamp()
+                    except ValueError:
+                        continue
+    except OSError:
+        pass
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return None
 
 
 def exif_summary(photo_paths: list[Path]) -> tuple[dict, list[str]]:

@@ -34,5 +34,5 @@ def test_damage_pipeline_empty_capture_emits_contract():
     assert isinstance(scope, list)
     assert any("damage:" in w or "R39" in w for w in warnings) or concealed
     assert limitations
-    assert any("SAM" in line or "damage_v3" in line for line in limitations)
+    assert any("SAM" in line or "damage_v7" in line for line in limitations)
     assert any("R39" in line or "mirror" in line for line in limitations)

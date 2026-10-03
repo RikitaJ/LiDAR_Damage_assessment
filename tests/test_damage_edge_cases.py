@@ -222,7 +222,7 @@ def test_opencv_missing_graceful(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(
         detect_mod,
         "_compute_image_hits",
-        lambda _p: ([], ["damage: opencv unavailable — image heuristics skipped"]),
+        lambda _p, **_: ([], ["damage: opencv unavailable — image heuristics skipped"]),
     )
     regions, w = detect_damage_regions([_room("R1")], cap, InputTier.LIDAR)
     assert regions == []

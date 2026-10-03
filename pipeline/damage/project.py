@@ -73,7 +73,7 @@ def hit_to_region(
     region_id: str,
 ) -> dict | None:
     cls = hit.get("class") or "water_stain"
-    wall_id = pick_wall_id(room, cls=cls, hit=hit)
+    wall_id = hit.get("wall_id_hint") or pick_wall_id(room, cls=cls, hit=hit)
     if not wall_id:
         return None
     is_ceiling = hit.get("surface_type") == "ceiling" or wall_id.endswith("-ceiling")
@@ -103,7 +103,7 @@ def hit_to_region(
         else:
             bottom_m = max(0.05, min(bottom_m, max(ceil_m - h - 0.05, 0.05)))
         score = float(hit.get("score", 0.45))
-        source = str(hit.get("source", "damage_detect_v3"))
+        source = str(hit.get("source", "damage_detect_v7"))
     except (TypeError, ValueError):
         return None
     sig = max(area * 0.26, SIGMA[tier].footprint_rel)

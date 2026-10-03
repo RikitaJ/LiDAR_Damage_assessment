@@ -147,7 +147,7 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         qa_warnings,
         capture_dir.resolve(),
         tier,
-        adjacency=session.adjacency,
+        adjacency=adjacency_for_stitch,
     )
     qa_warnings.extend(dmg_warn)
 

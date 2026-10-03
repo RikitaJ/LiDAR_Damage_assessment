@@ -105,3 +105,19 @@ Metric `--tier video` on Stray folders uses odometry loop closure, then **depth 
 **Why:** Brief §5.4–5.6: metric scale from multi-view + priors, not VLM alone; stitch disambiguation beyond door width.
 
 **Rejected:** Dense MapAnything front-end in-repo; hard-dropping manifest adjacency on weak ORB (manifest still trusted).
+
+## Phase 5 damage v5 — fast SAM-family (2026-04-03)
+
+**What:** Per-image segment pass: HSV crop refine (default, no torch); optional MobileSAM with singleton predictor + 512px cap; cache `damage_detect_v5`. No GrabCut, no pose load in detect.
+
+**Why:** Brief §5.8 segment step without 10+ minute test runs or full-frame GrabCut.
+
+**Rejected:** Mandatory torch in core deps; loading Stray/video poses during RGB detect.
+
+## Phase 5 damage v6 — camera projection (2026-04-03)
+
+**What:** After segment, project bbox corners through K (+ odometry/video T when present, else EXIF + standoff wall plane on photo tier); poses loaded only if `odometry.csv` or walkthrough video exists.
+
+**Why:** Brief §5.8 mask→surface UV without per-pixel loops or full-frame GrabCut.
+
+**Rejected:** Loading Stray on every capture root; dense mask ray march.

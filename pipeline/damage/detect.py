@@ -24,6 +24,7 @@ from pipeline.damage.project import (
     room_for_image,
 )
 from pipeline.damage.refine import refine_region_confidence
+from pipeline.damage.project_camera import PROJ_TAG
 from pipeline.damage.sanitize import filter_hits, sanitize_damage_regions
 
 MAX_DETECT_IMAGES = 12
@@ -52,6 +53,9 @@ def detect_damage_regions(
     if len(images) == 1:
         warnings.append("damage: single RGB still — limited multi-view confidence")
 
+    from pipeline.damage.frame_lookup import build_view_context
+
+    view_ctx = build_view_context(capture_root, tier, rgb_paths=images)
     hit_pairs: list[tuple[dict, dict]] = []
     vision_pass: list[tuple[Path, dict, list[str]]] = []
     cache_reads = 0
@@ -75,14 +79,16 @@ def detect_damage_regions(
                 warnings.append(f"damage: room {rid} has no walls — cues cannot attach to surfaces")
             continue
 
-        hits, from_cache, w = _hits_for_image(img)
+        hits, from_cache, w = _hits_for_image(img, room=room, tier=tier, view_ctx=view_ctx)
         warnings.extend(w)
         if from_cache:
             cache_reads += 1
         if w and any("unreadable" in x for x in w):
             unreadable += 1
         for hit in hits:
-            hit_pairs.append((room, enrich_hit_for_photo_tier(img, hit, room, tier)))
+            if PROJ_TAG not in str(hit.get("source", "")):
+                hit = enrich_hit_for_photo_tier(img, hit, room, tier)
+            hit_pairs.append((room, hit))
 
         tags, tw = _vision_tags_for_image(img)
         warnings.extend(tw)
@@ -116,14 +122,20 @@ def detect_damage_regions(
     return regions, warnings
 
 
-def _hits_for_image(image_path: Path) -> tuple[list[dict], bool, list[str]]:
+def _hits_for_image(
+    image_path: Path,
+    *,
+    room: dict,
+    tier: InputTier,
+    view_ctx,
+) -> tuple[list[dict], bool, list[str]]:
     warnings: list[str] = []
     cached = read_image_hits(image_path)
     if cached is not None:
         filtered, fw = filter_hits(cached)
         warnings.extend(fw)
         return filtered, True, warnings
-    hits, w = _compute_image_hits(image_path)
+    hits, w = _compute_image_hits(image_path, room=room, tier=tier, view_ctx=view_ctx)
     warnings.extend(w)
     write_image_hits(image_path, hits)
     return hits, False, warnings
@@ -176,8 +188,15 @@ def _dedupe_hits(hits: list[dict]) -> list[dict]:
     return out
 
 
-def _compute_image_hits(image_path: Path) -> tuple[list[dict], list[str]]:
+def _compute_image_hits(
+    image_path: Path,
+    *,
+    room: dict,
+    tier: InputTier,
+    view_ctx,
+) -> tuple[list[dict], list[str]]:
     from pipeline.damage.heuristics import crack_hit, stain_hits
+    from pipeline.damage.project_camera import project_hits_on_image
 
     warnings: list[str] = []
     hits: list[dict] = []
@@ -207,6 +226,20 @@ def _compute_image_hits(image_path: Path) -> tuple[list[dict], list[str]]:
     vlm_hits, vlm_w = _damage_vlm_hits(image_path)
     warnings.extend(vlm_w)
     hits = _dedupe_hits(hits + vlm_hits)
+    if hits:
+        from pipeline.damage.segment import segment_hits_on_image
+
+        hits = segment_hits_on_image(bgr, hits)
+        hits, pw = project_hits_on_image(
+            hits,
+            room=room,
+            tier=tier,
+            image_path=image_path,
+            view_ctx=view_ctx,
+            img_w=w_img,
+            img_h=h,
+        )
+        warnings.extend(pw)
     return hits, warnings
 
 

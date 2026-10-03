@@ -9,8 +9,8 @@ from pipeline.damage.detect import count_rgb_samples
 
 # Static gaps vs target architecture (always disclosed on every run).
 STATIC_LIMITATIONS: tuple[str, ...] = (
-    "damage_v3: no SAM segmenter; HSV/Hough v2 + optional Azure Vision tags + optional Azure OpenAI damage VLM",
-    "damage_v2: surface UV from image fractions + room walls (no calibrated camera projection)",
+    "damage_v7: fast SAM-family refine (HSV crop + optional MobileSAM); optional Azure Vision / damage VLM",
+    "damage_v7: mask bbox → wall UV via camera rays (EXIF/ordinal pose sync + unix odometry match; else EXIF standoff)",
     "damage_v2: multi-frame merge is 2D UV IoU on surface, not mask fusion in 3D",
     "damage_v2: CD-03 (wet-room adjacency) fires only when room names or manifest adjacency imply bath/kitchen",
     "damage_v2: per-image cues cached under .cache/damage/ (detector version pinned)",
@@ -53,7 +53,7 @@ def collect_damage_limitations(
             out.append("damage_v2: scope quantities are rule-derived from provisional damage, not verified repair takeoff")
 
     if tier == InputTier.PHOTOS:
-        out.append("damage_v2: photo tier has no per-frame poses — surface UV placement is approximate")
+        out.append("damage_v7: photo tier uses VLM door-wall hint + EXIF standoff (no per-still pose file)")
     if any("mirror" in w.lower() or "glass" in w.lower() or "r39" in w.lower() for w in qa_warnings):
         out.append("damage_v2: mirror/glass QA active — do not trust damage extent on affected surfaces (R39)")
 
@@ -61,7 +61,9 @@ def collect_damage_limitations(
 
 
 def _is_heuristic_source(source: str) -> bool:
-    if "merge_v2" in source:
+    if "merge_v2" in source or "mobile_sam_v1" in source or "camera_proj_v1" in source:
+        return False
+    if "sam_fast_hsv_v1" in source and "azure_damage" in source:
         return False
     base = source.split("+")[0]
     if "azure_damage_vlm" in source:

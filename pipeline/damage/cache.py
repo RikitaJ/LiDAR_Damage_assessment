@@ -6,7 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 
-DETECTOR_VERSION = "damage_detect_v3"
+DETECTOR_VERSION = "damage_detect_v7"
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = ROOT / ".cache" / "damage"
 
