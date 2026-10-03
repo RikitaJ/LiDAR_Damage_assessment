@@ -121,9 +121,11 @@ def test_report_and_readme_from_existing_runs(tmp_path):
     (apps / "magicplan_b1_rep1.json").write_text(json.dumps(app), encoding="utf-8")
     readme = tmp_path / "README.md"
     readme.write_text(f"intro\n{README_START}\nold\n{README_END}\noutro\n", encoding="utf-8")
+    devices = tmp_path / "DEVICE_MATRIX.md"
+    devices.write_text(f"head\n{README_START}\n{README_END}\n", encoding="utf-8")
     report = tmp_path / "REPORT.md"
     args = ["--gt", str(gt_dir), "--runs", str(runs), "--captures", str(tmp_path / "none"), "--manifest", str(manifest),
-            "--apps", str(apps), "--report", str(report), "--readme", str(readme)]
+            "--apps", str(apps), "--report", str(report), "--readme", str(readme), "--summary-into", str(devices)]
     assert main(args) == 0
     text = report.read_text(encoding="utf-8")
     assert "## b1_rep1 (lidar), pipeline at `" in text
@@ -147,6 +149,8 @@ def test_report_and_readme_from_existing_runs(tmp_path):
     assert "| Window 1 width | 0.700 | not detected | — | 0.692 | -0.8 cm (-1.1 %) |" in block
     assert "| Door 2 width | 0.889 | not detected | — | — | — |" in block
     assert "Ceiling height ±1.5 cm: miss by 1.0 cm" in block and "head-to-head: 0 of 6 beat or tie (gate 70 %)" in block
+    summary = devices.read_text(encoding="utf-8")
+    assert "| -1.3 % | -2.5 cm (-0.8 %) | -1.9 % | 1 of 4 within 2 cm, 0 phantom | 5 of 7 |" in summary
 
 
 def test_skip_current_reports_only_refs(tmp_path):

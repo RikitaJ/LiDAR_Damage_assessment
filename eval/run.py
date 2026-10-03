@@ -233,7 +233,7 @@ def repeat_section(groups) -> list[str]:
     return lines + [""]
 
 
-def update_readme(path: Path, block: list[str]) -> None:
+def write_block(path: Path, block: list[str]) -> None:
     text = path.read_text(encoding="utf-8")
     pattern = re.compile(re.escape(README_START) + r".*?" + re.escape(README_END), re.S)
     if not pattern.search(text):
@@ -250,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--manifest", type=Path, default=ROOT / "data" / "manifest.csv")
     p.add_argument("--apps", type=Path, default=ROOT / "data" / "app_exports", help="<app>_<capture_id>.json files")
     p.add_argument("--readme", type=Path, default=None, help="also write the per-room table into this README")
+    p.add_argument("--summary-into", type=Path, action="append", default=[],
+                   help="also write the summary table into this file (repeatable)")
     p.add_argument("--rerun", action="store_true", help="run the pipeline on each capture with ground truth first")
     p.add_argument("--ref", action="append", default=[], help="also run the pipeline as of this commit (repeatable)")
     p.add_argument("--skip-current", action="store_true", help="report only the --ref versions")
@@ -268,7 +270,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.skip_current:
         versions.append((head, None))
     command = ("python -m eval.run" + (" --rerun" if args.rerun else "") + "".join(f" --ref {r}" for r in args.ref)
-               + (" --skip-current" if args.skip_current else "") + (f" --readme {args.readme.name}" if args.readme else ""))
+               + (" --skip-current" if args.skip_current else "") + (f" --readme {args.readme.name}" if args.readme else "")
+               + "".join(f" --summary-into {p.as_posix()}" for p in args.summary_into))
     sections: list[str] = []
     summary: list[str] = []
     headlines: list[str] = []
@@ -314,6 +317,11 @@ def main(argv: list[str] | None = None) -> int:
                 if room and len(plan.get("rooms", [])) == 1:
                     groups.setdefault((room, tier, label), []).append((cid, plan))
 
+    summary_table = [
+        "| Capture and pipeline version | Worst wall | Ceiling | Floor area | Openings | Tape inside 90 % interval |",
+        "|---|---|---|---|---|---|",
+        *summary,
+    ]
     lines = [
         "# Benchmark report",
         "",
@@ -323,9 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         "",
         "## Summary",
         "",
-        "| Capture and pipeline version | Worst wall | Ceiling | Floor area | Openings | Tape inside 90 % interval |",
-        "|---|---|---|---|---|---|",
-        *summary,
+        *summary_table,
         "",
         *headlines,
         "",
@@ -343,7 +349,9 @@ def main(argv: list[str] | None = None) -> int:
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text("\n".join(lines), encoding="utf-8")
     if args.readme:
-        update_readme(args.readme, readme[:-1])
+        write_block(args.readme, readme[:-1])
+    for path in args.summary_into:
+        write_block(path, summary_table)
     print(args.report)
     return 0
 
