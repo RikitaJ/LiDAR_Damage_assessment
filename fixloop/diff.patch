@@ -1,0 +1,154 @@
+diff --git a/pipeline/geometry/floor_footprint.py b/pipeline/geometry/floor_footprint.py
+index d2ac658..0582d55 100644
+--- a/pipeline/geometry/floor_footprint.py
++++ b/pipeline/geometry/floor_footprint.py
+@@ -95,15 +95,6 @@ def footprint_from_path_xz(xs: np.ndarray, zs: np.ndarray) -> tuple[list[list[fl
+     return corners, _polygon_area(corners)
+ 
+ 
+-def ceiling_height_from_planes(pts: np.ndarray, floor_n: np.ndarray, floor_d: float) -> float:
+-    dist = pts @ floor_n - floor_d
+-    above = dist[dist > 0.25]
+-    if len(above) < 50:
+-        y = pts[:, 1]
+-        return max(2.2, min(float(np.percentile(y, 96) - np.percentile(y, 4)), 4.5))
+-    return max(2.2, min(float(np.percentile(above, 92)), 4.5))
+-
+-
+ def _occupancy_footprint(
+     xz: np.ndarray,
+     warnings: list[str],
+diff --git a/pipeline/geometry/stray_room.py b/pipeline/geometry/stray_room.py
+index 8e04c0e..98e9a95 100644
+--- a/pipeline/geometry/stray_room.py
++++ b/pipeline/geometry/stray_room.py
+@@ -5,17 +5,22 @@ from __future__ import annotations
+ from typing import Any
+ 
+ import numpy as np
+-from shapely.geometry import MultiPoint
++from shapely import contains_xy
++from shapely.geometry import MultiPoint, Polygon
+ 
+ from pipeline.config import InputTier, SIGMA
+ from pipeline.geometry.floor_footprint import (
+-    ceiling_height_from_planes,
+     fit_floor_plane,
+     floor_slice_xz,
+     footprint_from_floor_xz,
+ )
++from pipeline.geometry.photo_priors import CAMERA_HEIGHT_REF_M, CEILING_PRIOR_M
+ from pipeline.measure.confidence import area_m2, m
+-from pipeline.measure.intervals import with_interval
++from pipeline.measure.intervals import INTERVAL_Z, with_interval
++
++REACH_M = 1.5  # capture protocol: walk about 1 m from the walls; points farther out are seen through openings
++CEILING_ABOVE_CAMERA_M = 0.6  # a scan whose top never rises this far above the camera did not see the ceiling
++ENCLOSE_SHARE = 0.9  # a room outline must contain the camera path that scanned it
+ 
+ 
+ def room_from_point_cloud(
+@@ -26,23 +31,30 @@ def room_from_point_cloud(
+     scale_sigma_rel: float,
+     rng: np.random.Generator | None = None,
+     tier: InputTier = InputTier.LIDAR,
++    camera_positions: np.ndarray | None = None,
+ ) -> tuple[dict[str, Any], list[str]]:
+     warnings: list[str] = []
+     gen = rng if rng is not None else np.random.default_rng(0)
+ 
++    floor_y, top_y = (float(v) for v in np.percentile(pts[:, 1], [4, 96]))
++    ceiling_h, sig_h, ceiling_notes = _ceiling(top_y - floor_y, floor_y, camera_positions, tier, scale_sigma_rel)
++    if ceiling_notes != "stray_depth_planes":
++        warnings.append("ceiling not observed in the scan; reporting the 2.4-3.2 m prior with a wide interval")
++
+     floor_n, floor_d = fit_floor_plane(pts, gen)
+     floor_xz = floor_slice_xz(pts, floor_n, floor_d)
+-    ceiling_h = ceiling_height_from_planes(pts, floor_n, floor_d)
+-
+-    floor_y = float(np.median(pts[np.abs(pts @ floor_n - floor_d) <= 0.06, 1]))
+-    if not np.isfinite(floor_y):
+-        floor_y = float(np.percentile(pts[:, 1], 4))
+-
+-    wall_band = pts[(pts[:, 1] > floor_y + 0.35) & (pts[:, 1] < floor_y + ceiling_h - 0.2)]
++    wall_band = pts[(pts[:, 1] > floor_y + 0.35) & (pts[:, 1] < top_y - 0.25)]
+     xz_walls = wall_band[:, [0, 2]] if len(wall_band) >= 200 else floor_xz
+ 
+     corners, area_val, fp_warn = footprint_from_floor_xz(floor_xz, rng=gen)
+     warnings.extend(fp_warn)
++    area_notes = "stray_floor_occupancy"
++    if camera_positions is not None and not _encloses(corners, camera_positions[:, [0, 2]]):
++        box = _manhattan_corners(_within_reach(xz_walls, camera_positions[:, [0, 2]]))
++        if box is not None:
++            corners, area_notes = box, "stray_wall_band_box"
++            area_val = (box[1][0] - box[0][0]) * (box[2][1] - box[1][1])
++            warnings.append("visible floor does not enclose the camera path (furniture?); outline taken from the walls")
+ 
+     if len(xz_walls) < 80:
+         warnings.append("too few wall-band points; widening intervals")
+@@ -61,17 +73,16 @@ def room_from_point_cloud(
+         area_val * SIGMA[tier].footprint_rel * sig_extra,
+         area_val * scale_sigma_rel * 2,
+     )
+-    sig_h = max(SIGMA[tier].height_m, ceiling_h * scale_sigma_rel)
+ 
+     return (
+         {
+             "room_id": room_id,
+             "name": name,
+             "floor_area_m2": with_interval(
+-                area_val, sig_area, notes="stray_floor_occupancy", tier=tier, kind="footprint"
++                area_val, sig_area, notes=area_notes, tier=tier, kind="footprint"
+             ),
+             "ceiling_height_m": with_interval(
+-                ceiling_h, sig_h, notes="stray_depth_planes", tier=tier, kind="height"
++                ceiling_h, sig_h, notes=ceiling_notes, tier=tier, kind="height"
+             ),
+             "walls": walls,
+             "pose_world": {"translation_m": [cx, 0.0, cz], "rotation_quat": [0.0, 0.0, 0.0, 1.0]},
+@@ -81,6 +92,31 @@ def room_from_point_cloud(
+     )
+ 
+ 
++def _ceiling(
++    height: float,
++    floor_y: float,
++    camera_positions: np.ndarray | None,
++    tier: InputTier,
++    scale_sigma_rel: float,
++) -> tuple[float, float, str]:
++    """Top of the cloud above the floor, unless the scan never rose well above the camera."""
++    camera_h = float(np.median(camera_positions[:, 1])) - floor_y if camera_positions is not None else CAMERA_HEIGHT_REF_M
++    if height < camera_h + CEILING_ABOVE_CAMERA_M:
++        lo, hi = CEILING_PRIOR_M
++        return (lo + hi) / 2, (hi - lo) / (2 * INTERVAL_Z), "ceiling_not_observed_prior"
++    return height, max(SIGMA[tier].height_m, height * scale_sigma_rel), "stray_depth_planes"
++
++
++def _encloses(corners: list[list[float]], path_xz: np.ndarray) -> bool:
++    outline = Polygon(corners).buffer(0.15)
++    return float(np.mean(contains_xy(outline, path_xz[:, 0], path_xz[:, 1]))) >= ENCLOSE_SHARE
++
++
++def _within_reach(xz: np.ndarray, path_xz: np.ndarray) -> np.ndarray:
++    lo, hi = path_xz.min(axis=0) - REACH_M, path_xz.max(axis=0) + REACH_M
++    return xz[np.all((xz >= lo) & (xz <= hi), axis=1)]
++
++
+ def _manhattan_corners(xz: np.ndarray) -> list[list[float]] | None:
+     try:
+         mp = MultiPoint([(float(x), float(z)) for x, z in xz])
+diff --git a/pipeline/tiers/stray_room_v0.py b/pipeline/tiers/stray_room_v0.py
+index 1283286..aaafa03 100644
+--- a/pipeline/tiers/stray_room_v0.py
++++ b/pipeline/tiers/stray_room_v0.py
+@@ -45,7 +45,8 @@ def parse_stray_room(
+ 
+     if pts is not None and len(pts) >= 120:
+         room, extra = room_from_point_cloud(
+-            pts, room_id, name, scale_sigma_rel=cf.scale_sigma_rel, rng=rng
++            pts, room_id, name, scale_sigma_rel=cf.scale_sigma_rel, rng=rng,
++            camera_positions=np.array([fr.T_world_cam[:3, 3] for fr in cf.frames]),
+         )
+         return room, warnings + extra
+ 

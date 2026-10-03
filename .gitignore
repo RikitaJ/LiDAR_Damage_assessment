@@ -42,3 +42,6 @@ single_scan_with_ceiling/
 Thumbs.db
 .idea/
 .vscode/
+
+# Fix-loop intermediate runs (fixloop/before and fixloop/after are kept)
+fixloop/runs/

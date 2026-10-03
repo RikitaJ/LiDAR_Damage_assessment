@@ -1,0 +1,382 @@
+{
+  "schema_version": "1.0.0",
+  "capture_id": "lidar_B1_rep1",
+  "input_tier": "lidar",
+  "device": {
+    "model": "Stray Scanner export",
+    "has_lidar": true
+  },
+  "rooms": [
+    {
+      "room_id": "R1",
+      "name": "room_1",
+      "floor_area_m2": {
+        "value_m": 1.8627599572293623,
+        "value": 1.8627599572293623,
+        "lo": 1.7205792152139594,
+        "hi": 2.004940699244765,
+        "confidence": {
+          "sigma_m": 0.08643206201544242,
+          "tier_floor_m": 0.08643206201544242,
+          "notes": "stray_floor_occupancy"
+        }
+      },
+      "ceiling_height_m": {
+        "value_m": 2.2,
+        "value": 2.2,
+        "lo": 2.1240010000000002,
+        "hi": 2.275999,
+        "confidence": {
+          "sigma_m": 0.046200000000000005,
+          "tier_floor_m": 0.046200000000000005,
+          "notes": "stray_depth_planes"
+        }
+      },
+      "walls": [
+        {
+          "id": "R1-W1",
+          "length_m": {
+            "value_m": 2.77107178621869,
+            "value": 2.77107178621869,
+            "lo": 2.72172178621869,
+            "hi": 2.82042178621869,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              -0.40395192202700814,
+              -1.8451729400896468
+            ],
+            [
+              2.367119864191682,
+              -1.8451729400896468
+            ]
+          ],
+          "openings": []
+        },
+        {
+          "id": "R1-W2",
+          "length_m": {
+            "value_m": 0.6722164205537311,
+            "value": 0.6722164205537311,
+            "lo": 0.6228664205537311,
+            "hi": 0.7215664205537311,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              2.367119864191682,
+              -1.8451729400896468
+            ],
+            [
+              2.367119864191682,
+              -1.1729565195359157
+            ]
+          ],
+          "openings": []
+        },
+        {
+          "id": "R1-W3",
+          "length_m": {
+            "value_m": 2.77107178621869,
+            "value": 2.77107178621869,
+            "lo": 2.72172178621869,
+            "hi": 2.82042178621869,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              2.367119864191682,
+              -1.1729565195359157
+            ],
+            [
+              -0.40395192202700814,
+              -1.1729565195359157
+            ]
+          ],
+          "openings": [
+            {
+              "id": "R1-O30",
+              "kind": "door",
+              "width_m": {
+                "value_m": 1.2225316703905986,
+                "value": 1.2225316703905986,
+                "lo": 1.0455579857848556,
+                "hi": 1.3995053549963417,
+                "confidence": {
+                  "sigma_m": 0.1075827869943727,
+                  "tier_floor_m": 0.1075827869943727,
+                  "notes": "stray_gap"
+                }
+              },
+              "height_m": {
+                "value_m": 2.05,
+                "value": 2.05,
+                "lo": 2.0302599999999997,
+                "hi": 2.06974,
+                "confidence": {
+                  "sigma_m": 0.012,
+                  "tier_floor_m": 0.012,
+                  "notes": "lidar tier"
+                }
+              },
+              "wall_id": "R1-W3",
+              "anchor_m": [
+                1.7558540289963827,
+                -1.1729565195359157
+              ]
+            }
+          ]
+        },
+        {
+          "id": "R1-W4",
+          "length_m": {
+            "value_m": 0.6722164205537311,
+            "value": 0.6722164205537311,
+            "lo": 0.6228664205537311,
+            "hi": 0.7215664205537311,
+            "confidence": {
+              "sigma_m": 0.03,
+              "tier_floor_m": 0.03,
+              "notes": "stray_wall"
+            }
+          },
+          "polyline_m": [
+            [
+              -0.40395192202700814,
+              -1.1729565195359157
+            ],
+            [
+              -0.40395192202700814,
+              -1.8451729400896468
+            ]
+          ],
+          "openings": []
+        }
+      ],
+      "pose_world": {
+        "translation_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation_quat": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    }
+  ],
+  "stitched_plan": {
+    "footprint_area_m2": {
+      "value_m": 1.8627599572293618,
+      "value": 1.8627599572293618,
+      "lo": 1.8321175559329388,
+      "hi": 1.8934023585257849,
+      "confidence": {
+        "sigma_m": 0.01862759957229362,
+        "tier_floor_m": 0.01862759957229362,
+        "notes": "footprint"
+      }
+    },
+    "adjacency": [],
+    "global_walls": [
+      {
+        "id": "R1_R1-W1",
+        "length_m": {
+          "value_m": 2.77107178621869,
+          "value": 2.77107178621869,
+          "lo": 2.72172178621869,
+          "hi": 2.82042178621869,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            -0.40395192202700814,
+            -1.8451729400896468
+          ],
+          [
+            2.367119864191682,
+            -1.8451729400896468
+          ]
+        ],
+        "openings": []
+      },
+      {
+        "id": "R1_R1-W2",
+        "length_m": {
+          "value_m": 0.6722164205537311,
+          "value": 0.6722164205537311,
+          "lo": 0.6228664205537311,
+          "hi": 0.7215664205537311,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            2.367119864191682,
+            -1.8451729400896468
+          ],
+          [
+            2.367119864191682,
+            -1.1729565195359157
+          ]
+        ],
+        "openings": []
+      },
+      {
+        "id": "R1_R1-W3",
+        "length_m": {
+          "value_m": 2.77107178621869,
+          "value": 2.77107178621869,
+          "lo": 2.72172178621869,
+          "hi": 2.82042178621869,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            2.367119864191682,
+            -1.1729565195359157
+          ],
+          [
+            -0.40395192202700814,
+            -1.1729565195359157
+          ]
+        ],
+        "openings": [
+          {
+            "id": "R1-O30",
+            "kind": "door",
+            "width_m": {
+              "value_m": 1.2225316703905986,
+              "value": 1.2225316703905986,
+              "lo": 1.0455579857848556,
+              "hi": 1.3995053549963417,
+              "confidence": {
+                "sigma_m": 0.1075827869943727,
+                "tier_floor_m": 0.1075827869943727,
+                "notes": "stray_gap"
+              }
+            },
+            "height_m": {
+              "value_m": 2.05,
+              "value": 2.05,
+              "lo": 2.0302599999999997,
+              "hi": 2.06974,
+              "confidence": {
+                "sigma_m": 0.012,
+                "tier_floor_m": 0.012,
+                "notes": "lidar tier"
+              }
+            },
+            "wall_id": "R1-W3",
+            "anchor_m": [
+              1.7558540289963827,
+              -1.1729565195359157
+            ]
+          }
+        ]
+      },
+      {
+        "id": "R1_R1-W4",
+        "length_m": {
+          "value_m": 0.6722164205537311,
+          "value": 0.6722164205537311,
+          "lo": 0.6228664205537311,
+          "hi": 0.7215664205537311,
+          "confidence": {
+            "sigma_m": 0.03,
+            "tier_floor_m": 0.03,
+            "notes": "stray_wall"
+          }
+        },
+        "polyline_m": [
+          [
+            -0.40395192202700814,
+            -1.1729565195359157
+          ],
+          [
+            -0.40395192202700814,
+            -1.8451729400896468
+          ]
+        ],
+        "openings": []
+      }
+    ],
+    "render_path": "D:\\LiDAR_Damage_assessment\\fixloop\\runs\\lidar_B1_rep1@2d3222e\\floorplan.png",
+    "drift_correction_applied": true
+  },
+  "damage_regions": [
+    {
+      "kind": "geometry_uncertainty",
+      "severity": "info",
+      "notes": "sparse floor occupancy; bbox fallback",
+      "source": "qa_rule_v0"
+    },
+    {
+      "kind": "capture_lidar_scan",
+      "severity": "info",
+      "notes": "Stray depth capture; manual damage markup not automated in v0",
+      "source": "tier_rule_v0"
+    }
+  ],
+  "concealed_damage_flags": [],
+  "scope_line_items": [
+    {
+      "item": "verify_flagged_regions",
+      "tier": "lidar",
+      "count": 2,
+      "notes": "Automated hints only \u2014 not a repair estimate"
+    },
+    {
+      "item": "address_qa_warnings",
+      "tier": "lidar",
+      "notes": "stray pose loop-closure gap 0.065 m (correction scale=0.013)"
+    }
+  ],
+  "drift_handling": {
+    "method": "stray_loop_closure+door_graph",
+    "loop_closure_enabled": true,
+    "description": "Stray: odometry loop nudge; multi-room door graph with overlap-only separation.",
+    "pose_graph_notes": "Drift on applies loop shift + stitch correction."
+  },
+  "pipeline_meta": {
+    "command": "housefloor run --capture <capture_dir>",
+    "capture_dir": "lidar_B1_rep1",
+    "duration_s": 6.27,
+    "models_used": [
+      "stray_scanner_v0",
+      "trajectory_or_depth_geometry"
+    ],
+    "qa_warnings": [
+      "stray pose loop-closure gap 0.065 m (correction scale=0.013)",
+      "sparse floor occupancy; bbox fallback"
+    ],
+    "overlap_m2": 0.0
+  }
+}
