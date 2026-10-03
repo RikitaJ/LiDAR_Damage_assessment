@@ -44,6 +44,20 @@ class Row:
     def covered(self) -> bool:
         return self.lo is not None and self.hi is not None and self.lo <= self.truth <= self.hi
 
+    @property
+    def accuracy(self) -> float:
+        """Percent of the tape value: 100 minus the absolute relative error."""
+        return 100 * (1 - abs(self.error) / self.truth)
+
+    @property
+    def miss(self) -> float | None:
+        """How far outside the gate tolerance the error is (0 when it passes), in the gate's unit."""
+        if self.tolerance is None:
+            return None
+        mode, tol = self.tolerance
+        err = abs(self.error) if mode == "abs" else abs(self.error) / self.truth
+        return max(0.0, err - tol)
+
 
 def measurement(m: dict) -> tuple[float, float | None, float | None]:
     return float(m.get("value", m.get("value_m"))), m.get("lo"), m.get("hi")
@@ -94,39 +108,43 @@ def score_openings(room: dict, taped: list[dict]) -> dict:
     found = [(op.get("kind", "opening"), measurement(op["width_m"])) for w in room.get("walls", []) for op in w.get("openings", [])]
     free = set(range(len(found)))
     rows: list[Row] = []
+    undetected: list[tuple[str, float]] = []
     seen: dict[str, int] = {}
     for t in taped:
         kind, width = t["kind"], t["width_cm"] / 100
         seen[kind] = seen.get(kind, 0) + 1
+        name = f"{kind.title()} {seen[kind]} width"
         same_kind = [j for j in free if found[j][0] == kind]
         if not same_kind:
+            undetected.append((name, width))
             continue
         j = min(same_kind, key=lambda j: abs(found[j][1][0] - width))
         free.discard(j)
         v, lo, hi = found[j][1]
-        rows.append(Row(f"{kind.title()} {seen[kind]} width", width, v, lo, hi, ("abs", OPENING_WIDTH_TOL_M)))
+        rows.append(Row(name, width, v, lo, hi, ("abs", OPENING_WIDTH_TOL_M)))
     hits = sum(bool(r.passed) for r in rows)
     phantom = len(free)
     rate = hits / (len(taped) + phantom)
     return {
-        "rows": rows, "taped": len(taped), "found": len(found), "hits": hits,
+        "rows": rows, "undetected": undetected, "taped": len(taped), "found": len(found), "hits": hits,
         "missed": len(taped) - hits, "phantom": phantom, "rate": rate, "passed": rate >= OPENING_PASS_RATE,
     }
 
 
-def head_to_head(ours: list[Row], app: dict) -> dict:
-    """Shared length dimensions (walls, ceiling): beat, tie (within 3 mm of our error) or lose against the app."""
-    walls = [r for r in ours if r.name.startswith("Wall")]
-    app_walls = [cm / 100 for cm in app.get("wall_lengths_cm", [])]
-    pairs = [(r, app_walls[j]) for r, j in zip(walls, align_walls(app_walls, [r.truth for r in walls])) if j is not None]
-    ceiling = next((r for r in ours if r.name == "Ceiling height"), None)
-    if ceiling is not None and app.get("ceiling_height_cm") is not None:
-        pairs.append((ceiling, app["ceiling_height_cm"] / 100))
+def head_to_head(ours: list[Row], undetected: list[tuple[str, float]], app_lengths: dict[str, float]) -> dict:
+    """Each length the app reports, by measurement name: beat, tie (errors within 3 mm) or lose.
+    A taped opening the app measured but we did not detect counts as lose."""
+    mine = {r.name: r for r in ours}
+    missing = dict(undetected)
     rows = []
-    for r, theirs in pairs:
-        gap = abs(theirs - r.truth) - abs(r.error)
-        rows.append({"name": r.name, "truth": r.truth, "ours": r.value, "theirs": theirs,
-                     "result": "tie" if abs(gap) <= TIE_M else ("beat" if gap > 0 else "lose")})
+    for name, theirs in app_lengths.items():
+        if name in mine:
+            r = mine[name]
+            gap = abs(theirs - r.truth) - abs(r.error)
+            result = "tie" if abs(gap) <= TIE_M else ("beat" if gap > 0 else "lose")
+            rows.append({"name": name, "truth": r.truth, "ours": r.value, "theirs": theirs, "result": result})
+        elif name in missing:
+            rows.append({"name": name, "truth": missing[name], "ours": None, "theirs": theirs, "result": "lose"})
     wins = sum(row["result"] != "lose" for row in rows)
     return {"rows": rows, "beat_or_tie": wins, "passed": bool(rows) and wins / len(rows) >= HEAD_TO_HEAD_RATE}
 
