@@ -8,7 +8,7 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 |---|---|---|---|---|---|
 | R1 | Capture route: one-page stock protocol (Route 2) | `docs/CAPTURE_PROTOCOL.md` | one-page protocol | done | Stray Scanner, the Camera app and the hand-off, plus the operator's folder layout. Not yet trialled by someone outside the team. |
 | R2 | Three input tiers, same output contract | `pipeline/frontends/stray_lidar.py`, `pipeline/frontends/video.py`, `pipeline/tiers/photo_room_v0.py` | `plan.json` from each tier | partial | LiDAR is measured against tape. The photo tier can't read EXIF from iPhone HEIC files and falls back to a prior. A plain iPhone video has no metric scale yet. |
-| R3 | Device matrix | `docs/DEVICE_MATRIX.md` | table | partial | Template only. |
+| R3 | Device matrix | `docs/DEVICE_MATRIX.md` | table with generated accuracy | done | Only the LiDAR tier on our iPhone 13 Pro is measured; every other device and tier is marked untested. |
 
 ## Output contract
 
@@ -50,7 +50,7 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 | ID | Requirement | File path | Artifact | Status | Notes |
 |---|---|---|---|---|---|
 | R29 | Compliance matrix | `docs/COMPLIANCE_MATRIX.md` | this file | done | |
-| R30 | Capture route document plus device matrix | `docs/CAPTURE_PROTOCOL.md`, `docs/DEVICE_MATRIX.md` | protocol and table | partial | The protocol is done; see R3 for the device matrix. |
+| R30 | Capture route document plus device matrix | `docs/CAPTURE_PROTOCOL.md`, `docs/DEVICE_MATRIX.md` | protocol and table | done | See R1 and R3. |
 | R31 | README to a running fresh capture in under 15 minutes; one command | `README.md` | setup and run steps | partial | A fresh install plus a B1 run is verified on Windows 11 with Python 3.12; not tried on macOS or Linux. |
 | R32 | Reproduction bundle | `eval/run.py`, `fixloop/run.sh`, `scripts/fetch_data.py`, `data/manifest.csv` | regenerated report and fix loop | partial | Every reported number regenerates from raw captures. The manifest still needs the Drive download links. |
 | R33 | Benchmark report: all tiers, repeatability, head-to-head, timing | `docs/BENCHMARK_REPORT.md` | report | partial | LiDAR gates, head-to-head and timing are there. Repeatability and the photo and video tiers are not. |
