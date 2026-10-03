@@ -22,10 +22,12 @@ def test_stray_depth_produces_intervals_and_walls(tmp_path: Path):
     assert room["ceiling_height_m"]["value_m"] >= 2.0
 
 
-def test_fetch_data_skips_todo_url():
+def test_fetch_data_skips_todo_url(tmp_path: Path):
     root = Path(__file__).resolve().parents[1]
+    manifest = tmp_path / "manifest.csv"
+    manifest.write_text("capture_id,url,sha256\nexample,TODO,TODO\n", encoding="utf-8")
     proc = subprocess.run(
-        [sys.executable, str(root / "scripts" / "fetch_data.py")],
+        [sys.executable, str(root / "scripts" / "fetch_data.py"), "--manifest", str(manifest), "--dest", str(tmp_path)],
         capture_output=True,
         text=True,
         check=False,
