@@ -258,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     with args.manifest.open(encoding="utf-8", newline="") as f:
-        listed = {row["capture_id"] for row in csv.DictReader(f)}
+        listed = {row["capture_id"]: row for row in csv.DictReader(f)}
     gts = {}
     for path in sorted(args.gt.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -339,11 +339,15 @@ def main(argv: list[str] | None = None) -> int:
         *repeat_section(groups),
     ]
     if args.captures.is_dir():
-        missing += [
-            f"`{d.name}`: no tape ground truth (internal consistency only)"
-            for d in sorted(args.captures.iterdir())
-            if d.is_dir() and d.name not in gts
-        ]
+        taped = {gt.get("_meta", {}).get("room") for gt in gts.values()} - {None}
+        for d in sorted(args.captures.iterdir()):
+            if not d.is_dir() or d.name in gts:
+                continue
+            row = listed.get(d.name, {})
+            if row.get("rooms") in taped:
+                missing.append(f"`{d.name}`: room {row['rooms']} has tape ground truth, but the {row.get('tier')} tier is not scored yet")
+            else:
+                missing.append(f"`{d.name}`: no tape ground truth (internal consistency only)")
     if missing:
         lines += ["## Not scored", ""] + [f"- {m}" for m in missing] + [""]
     args.report.parent.mkdir(parents=True, exist_ok=True)

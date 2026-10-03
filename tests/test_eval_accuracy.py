@@ -165,3 +165,21 @@ def test_skip_current_reports_only_refs(tmp_path):
     assert main(args) == 0
     text = report.read_text(encoding="utf-8")
     assert "--skip-current" in text and "## b1_rep1" not in text
+
+
+def test_not_scored_says_why(tmp_path):
+    gt_dir, captures = tmp_path / "gt", tmp_path / "captures"
+    gt_dir.mkdir()
+    (gt_dir / "b1_rep1.json").write_text(json.dumps(GT), encoding="utf-8")
+    for cid in ("photos_b1", "sample"):
+        (captures / cid).mkdir(parents=True)
+    manifest = tmp_path / "manifest.csv"
+    manifest.write_text("capture_id,tier,rooms\nb1_rep1,lidar,B1\nphotos_b1,photos,B1\nsample,lidar,not provided\n",
+                        encoding="utf-8")
+    report = tmp_path / "REPORT.md"
+    args = ["--gt", str(gt_dir), "--runs", str(tmp_path / "runs"), "--captures", str(captures),
+            "--manifest", str(manifest), "--apps", str(tmp_path / "apps"), "--report", str(report)]
+    assert main(args) == 0
+    text = report.read_text(encoding="utf-8")
+    assert "- `photos_b1`: room B1 has tape ground truth, but the photos tier is not scored yet" in text
+    assert "- `sample`: no tape ground truth (internal consistency only)" in text
