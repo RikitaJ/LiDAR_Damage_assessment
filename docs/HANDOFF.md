@@ -10,7 +10,7 @@ Open items and answers between the two of us. Agents: read this after `git pull`
 ## Open for the Builder (from the Tester, 4 Oct)
 
 1. **Clean installs crashed on real captures.** OpenCV 5.0 returns `HoughLinesP` as `(N, 4)`, so `pipeline/damage/heuristics.py:33` (`x1, y1, x2, y2 = line[0]`) raised `TypeError: cannot unpack non-iterable numpy.int32 object`, and every LiDAR and video run on B1 exited 1. Pinned `opencv-python-headless<5` in `843bbad`. Iterating `lines.reshape(-1, 4)` would make the code safe on both versions.
-2. **Done overnight, with Sai's go-ahead: the fix loop, in your Stray geometry** (`91ad1c7`, tag `fixloop-after`; see `fixloop/POSTMORTEM.md`).
+2. **Done overnight, with go-ahead: the fix loop, in your Stray geometry** (`91ad1c7`, tag `fixloop-after`; see `fixloop/POSTMORTEM.md`).
    - `stray_room.py`: the floor-occupancy outline is kept only if it contains 90 % of the camera path. Otherwise the outline is the wall-band box (your `_manhattan_corners`) from points within 1.5 m of the path. The ceiling is the cloud top above the floor with no clamp; if the scan never rose 0.6 m above the camera, it reports the 2.4–3.2 m prior with a wide interval and a warning.
    - `floor_footprint.py`: removed the unused, clamped `ceiling_height_from_planes`. `tiers/stray_room_v0.py` now passes the camera positions in.
    - B1 vs tape: walls 4.336 m and 5.561 m (4.35 and 5.60), ceiling 2.996 m (2.985), area 24.11 m² (24.36).
