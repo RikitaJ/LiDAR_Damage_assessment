@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "status": "TODO",
+    "source": "Fill from tape measure or architectural plan — do not guess"
+  },
+  "footprint_area_m2": null,
+  "ceiling_height_cm": {
+    "R1": null
+  },
+  "wall_lengths_cm": {
+    "R1": []
+  },
+  "openings_cm": []
+}

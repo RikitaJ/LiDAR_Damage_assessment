@@ -10,6 +10,7 @@ from pipeline.frontends.video import load_video_capture
 from pipeline.geometry.hard_surfaces import filter_points_and_warn
 from pipeline.geometry.stray_points import collect_world_points
 from pipeline.geometry.stray_room import room_from_point_cloud
+from pipeline.geometry.video_scale import align_video_room_to_odometry
 from pipeline.tiers.stray_room_v0 import _room_from_trajectory
 
 
@@ -34,7 +35,8 @@ def parse_video_room(lidar_dir: Path, room_id: str, name: str) -> tuple[dict[str
             )
             return _tag_video_tier(room), warnings + extra
 
-    room, extra = _room_from_trajectory(cf, room_id, name, warnings)
+    room, extra = _room_from_trajectory(cf, room_id, name, warnings, path_buffer=True)
+    extra.extend(align_video_room_to_odometry(room, lidar_dir))
     return _tag_video_tier(room), extra
 
 

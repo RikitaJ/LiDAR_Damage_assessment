@@ -51,3 +51,13 @@ Uses **pytest fixtures only** (no bundled demo house in the repo):
 ```powershell
 $env:MPLBACKEND='Agg'; pytest tests -q
 ```
+
+## Scoring (ground truth)
+
+Fill `data/ground_truth/<capture_id>.json` with **measured** values, then:
+
+```powershell
+python -m eval.cli score --capture single_room\c00a170fe1 --plan single_room\c00a170fe1\out_stray_v3\plan.json --tier lidar
+```
+
+Pipeline never reads GT; calibration multipliers live in `configs/calibration.json`.

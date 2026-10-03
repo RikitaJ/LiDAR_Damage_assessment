@@ -6,16 +6,17 @@ import time
 from pathlib import Path
 
 from pipeline.config import SCHEMA_PATH, InputTier, RunConfig
+from pipeline.damage.rules_v0 import build_scope_line_items, infer_damage_regions
 from pipeline.export.output import render_plan, write_plan
 from pipeline.io.session import load_session
 from pipeline.io.validate import sanitize_room
 from pipeline.stitch.stitch import stitch
-from pipeline.stitch.stray_drift import apply_stray_loop_to_rooms
 from pipeline.stitch.video_drift import apply_video_loop_to_rooms
 from pipeline.geometry.overlap import pairwise_overlap_m2
 from pipeline.io.tier_detect import CaptureKind, detect_capture_kind
 from pipeline.tiers.lidar import parse_room
 from pipeline.tiers.stray_room_v0 import parse_stray_room
+from pipeline.tiers.photo_room_v0 import parse_photo_room
 from pipeline.tiers.video_room_v0 import parse_video_room
 
 
@@ -23,11 +24,17 @@ def _has_roomplan_json(lidar_dir: Path) -> bool:
     for name in ("room.json", "captured_room.json"):
         if (lidar_dir / name).is_file():
             return True
-    return bool(list(lidar_dir.glob("*.json")))
+    skip = {"manifest.json", "ground_truth.json", "plan.json"}
+    for p in lidar_dir.glob("*.json"):
+        if p.name not in skip and "walls" in p.read_text(encoding="utf-8")[:800]:
+            return True
+    return False
 
 
-def _parse_room_paths(rp, tier: InputTier) -> tuple[dict, list[str]]:
+def _parse_room_paths(rp, tier: InputTier, config: RunConfig) -> tuple[dict, list[str]]:
     warnings: list[str] = []
+    if tier == InputTier.PHOTOS:
+        return parse_photo_room(rp.lidar_dir, rp.room_id, rp.name)
     if tier == InputTier.VIDEO:
         return parse_video_room(rp.lidar_dir, rp.room_id, rp.name)
     if _has_roomplan_json(rp.lidar_dir):
@@ -39,6 +46,7 @@ def _parse_room_paths(rp, tier: InputTier) -> tuple[dict, list[str]]:
             rp.name,
             stray_segment=rp.stray_segment,
             stray_segment_count=rp.stray_segment_count,
+            drift_correction=config.drift_correction,
         )
         return room, w
     raise FileNotFoundError(f"No RoomPlan JSON, Stray odometry, or video under {rp.lidar_dir}")
@@ -73,7 +81,7 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
     rooms_raw: list[dict] = []
     qa_warnings: list[str] = []
     for rp in session.rooms:
-        r, w = _parse_room_paths(rp, tier)
+        r, w = _parse_room_paths(rp, tier, config)
         qa_warnings.extend(w)
         qa_warnings.extend(sanitize_room(r))
         orphans = r.pop("_orphan_openings", [])
@@ -82,9 +90,7 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         rooms_raw.append(r)
 
     root = session.rooms[0].lidar_dir if session.rooms else capture_dir
-    if tier == InputTier.LIDAR and (root / "odometry.csv").is_file():
-        qa_warnings.extend(apply_stray_loop_to_rooms(rooms_raw, root, config.drift_correction))
-    elif tier == InputTier.VIDEO:
+    if tier == InputTier.VIDEO:
         qa_warnings.extend(apply_video_loop_to_rooms(rooms_raw, root, config.drift_correction))
 
     apply_drift = config.drift_correction
@@ -102,6 +108,12 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
     png = out_dir / "floorplan.png"
     stitched["render_path"] = render_plan(stitched, rooms, png)
 
+    damage_regions, dmg_warn = infer_damage_regions(
+        rooms, qa_warnings, capture_dir.resolve(), tier
+    )
+    qa_warnings.extend(dmg_warn)
+    scope_items = build_scope_line_items(qa_warnings, damage_regions, tier)
+
     payload = {
         "schema_version": "1.0.0",
         "capture_id": session.capture_id,
@@ -109,9 +121,9 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         "device": {"model": session.device_model, "has_lidar": session.has_lidar},
         "rooms": rooms,
         "stitched_plan": stitched,
-        "damage_regions": [],
-        "concealed_damage_flags": [],
-        "scope_line_items": [],
+        "damage_regions": damage_regions,
+        "concealed_damage_flags": _concealed_flags_from_qa(qa_warnings),
+        "scope_line_items": scope_items,
         "drift_handling": _drift_block(session, tier, config.loop_closure),
         "pipeline_meta": {
             "command": "housefloor run --capture <capture_dir>",
@@ -152,9 +164,25 @@ def _drift_block(session, tier: InputTier, loop_closure: bool) -> dict:
     }
 
 
+def _concealed_flags_from_qa(qa_warnings: list[str]) -> list[dict]:
+    flags: list[dict] = []
+    for w in qa_warnings:
+        low = w.lower()
+        if "r39" in low or "glass" in low or "mirror" in low or "sparse depth" in low:
+            flags.append({"severity": "review", "reason": w, "source": "qa_heuristic_v0"})
+    return flags
+
+
 def _models_used(session, tier: InputTier) -> list[str]:
+    if tier == InputTier.PHOTOS:
+        from pipeline.integrations.azure_optional import _env, _load_dotenv_once
+
+        _load_dotenv_once()
+        if _env("AZURE_OPENAI_API_KEY"):
+            return ["photo_v0_prior", "azure_openai_vlm_optional", "shared_stitch"]
+        return ["photo_v0_prior", "shared_stitch"]
     if tier == InputTier.VIDEO:
-        return ["video_keyframes_v0", "optical_flow_poses", "shared_stitch"]
+        return ["video_keyframes_v0", "optical_flow_poses", "odometry_scale_optional", "shared_stitch"]
     root = session.rooms[0].lidar_dir if session.rooms else None
     if root and (root / "odometry.csv").is_file():
         return ["stray_scanner_v0", "trajectory_or_depth_geometry"]

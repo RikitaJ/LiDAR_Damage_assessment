@@ -8,6 +8,12 @@ import numpy as np
 from shapely.geometry import MultiPoint
 
 from pipeline.config import InputTier, SIGMA
+from pipeline.geometry.floor_footprint import (
+    ceiling_height_from_planes,
+    fit_floor_plane,
+    floor_slice_xz,
+    footprint_from_floor_xz,
+)
 from pipeline.measure.confidence import area_m2, m
 from pipeline.measure.intervals import with_interval
 
@@ -18,46 +24,55 @@ def room_from_point_cloud(
     name: str,
     *,
     scale_sigma_rel: float,
+    rng: np.random.Generator | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     tier = InputTier.LIDAR
     warnings: list[str] = []
+    gen = rng if rng is not None else np.random.default_rng(0)
 
-    floor_y = float(np.percentile(pts[:, 1], 4))
-    ceiling_y = float(np.percentile(pts[:, 1], 96))
-    ceiling_h = max(2.0, min(ceiling_y - floor_y, 4.5))
+    floor_n, floor_d = fit_floor_plane(pts, gen)
+    floor_xz = floor_slice_xz(pts, floor_n, floor_d)
+    ceiling_h = ceiling_height_from_planes(pts, floor_n, floor_d)
 
-    wall_band = pts[
-        (pts[:, 1] > floor_y + 0.35) & (pts[:, 1] < ceiling_y - 0.25)
-    ]
-    xz = wall_band[:, [0, 2]] if len(wall_band) >= 200 else pts[:, [0, 2]]
-    if len(xz) < 100:
-        warnings.append("too few points for wall fit; widening intervals")
-        return _fallback_bbox(pts, room_id, name, tier, ceiling_h, scale_sigma_rel, warnings)
+    floor_y = float(np.median(pts[np.abs(pts @ floor_n - floor_d) <= 0.06, 1]))
+    if not np.isfinite(floor_y):
+        floor_y = float(np.percentile(pts[:, 1], 4))
 
-    corners = _manhattan_corners(xz)
-    if corners is None:
-        warnings.append("wall fit failed; using axis bbox")
-        corners = _axis_bbox_corners(xz)
+    wall_band = pts[(pts[:, 1] > floor_y + 0.35) & (pts[:, 1] < floor_y + ceiling_h - 0.2)]
+    xz_walls = wall_band[:, [0, 2]] if len(wall_band) >= 200 else floor_xz
 
-    walls, open_warn = _walls_with_openings(corners, room_id, tier, xz, floor_y, scale_sigma_rel)
+    corners, area_val, fp_warn = footprint_from_floor_xz(floor_xz, rng=gen)
+    warnings.extend(fp_warn)
+
+    if len(xz_walls) < 80:
+        warnings.append("too few wall-band points; widening intervals")
+        sig_extra = 2.0
+    else:
+        sig_extra = 1.0
+
+    walls, open_warn = _walls_with_openings(corners, room_id, tier, xz_walls, floor_y, scale_sigma_rel)
     warnings.extend(open_warn)
 
     xs = [c[0] for c in corners]
     zs = [c[1] for c in corners]
-    span_x = max(xs) - min(xs)
-    span_z = max(zs) - min(zs)
-    area_val = max(span_x * span_z, 0.5)
     cx, cz = float(np.mean(xs)), float(np.mean(zs))
 
-    sig_area = max(area_val * SIGMA[tier].footprint_rel, area_val * scale_sigma_rel * 2)
+    sig_area = max(
+        area_val * SIGMA[tier].footprint_rel * sig_extra,
+        area_val * scale_sigma_rel * 2,
+    )
     sig_h = max(SIGMA[tier].height_m, ceiling_h * scale_sigma_rel)
 
     return (
         {
             "room_id": room_id,
             "name": name,
-            "floor_area_m2": with_interval(area_val, sig_area, notes="stray_depth_footprint"),
-            "ceiling_height_m": with_interval(ceiling_h, sig_h, notes="stray_depth_planes"),
+            "floor_area_m2": with_interval(
+                area_val, sig_area, notes="stray_floor_occupancy", tier=tier, kind="footprint"
+            ),
+            "ceiling_height_m": with_interval(
+                ceiling_h, sig_h, notes="stray_depth_planes", tier=tier, kind="height"
+            ),
             "walls": walls,
             "pose_world": {"translation_m": [cx, 0.0, cz], "rotation_quat": [0.0, 0.0, 0.0, 1.0]},
             "_orphan_openings": [],
@@ -126,7 +141,9 @@ def _walls_with_openings(
         walls.append(
             {
                 "id": f"{room_id}-W{i + 1}",
-                "length_m": with_interval(length, sigma_len, notes="stray_wall"),
+                "length_m": with_interval(
+                    length, sigma_len, notes="stray_wall", tier=tier, kind="wall"
+                ),
                 "polyline_m": [a, b],
                 "openings": openings,
             }
@@ -207,7 +224,7 @@ def _maybe_add_opening(
         {
             "id": f"{room_id}-O{wall_idx + 1}{g0}",
             "kind": "door" if width >= 0.7 else "opening",
-            "width_m": with_interval(width, sig_w, notes="stray_gap"),
+            "width_m": with_interval(width, sig_w, notes="stray_gap", tier=tier, kind="opening"),
             "height_m": m(2.05, tier, "height"),
             "wall_id": f"{room_id}-W{wall_idx + 1}",
             "anchor_m": [float(center[0]), float(center[1])],

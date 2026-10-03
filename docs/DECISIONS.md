@@ -35,3 +35,11 @@
 **Why:** Brief requires three tiers; video shares backend with Stray/LiDAR work. Azure keys from Quanta testing RG via `.env` only (never in git).
 
 **Rejected:** Calling Azure on every frame in v0 (cost, latency, rule 6 cold walk-in must run offline).
+
+## Stray footprint v2 + pose loop closure (2026-04-03)
+
+**What:** RANSAC floor plane, occupancy-grid footprint (not wall-band AABB), voxel downsample, loop closure on odometry *before* depth fusion; video footprint from buffered camera path.
+
+**Why:** Real scans showed ~78–231 m² single-room footprints and drift ablation Δ=0 m² because wall translation did not change area.
+
+**Rejected:** Post-hoc `apply_stray_loop_to_rooms` wall nudge only (kept as no-op for compatibility).

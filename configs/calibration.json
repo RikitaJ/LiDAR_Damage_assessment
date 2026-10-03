@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "notes": "Last fit from tests/fixtures/lidar_two_room via eval.calibrate",
+  "multipliers": {
+    "lidar": {
+      "footprint": 1.16,
+      "wall": 1.0,
+      "height": 1.05,
+      "opening": 1.1
+    },
+    "video": {
+      "footprint": 1.45,
+      "wall": 1.4,
+      "height": 1.2,
+      "opening": 1.5
+    },
+    "photos": {
+      "footprint": 1.6,
+      "wall": 1.55,
+      "height": 1.25,
+      "opening": 1.6
+    }
+  },
+  "fixture_metrics": {
+    "footprint_error_pct": 0.15966666045540917,
+    "wall_pass_rate": 1.0
+  }
+}

@@ -13,4 +13,6 @@
 - Footprint error (%) per tier  
 - Repeatability max wall delta (cm)  
 
-Until Apple benchmark data exists, this file stays **template only**.
+| Stray Scanner export (iPhone LiDAR app) | varies | ✗ | ✓ (same mp4) | ✓ depth+poses | Footprint **unverified** until `data/ground_truth/` filled; v2 run ~29–78 m² on sample scans (2026-04-03). |
+
+Until Apple benchmark data exists, numeric error columns stay **TODO** — use `python -m eval.cli score` after GT is complete.

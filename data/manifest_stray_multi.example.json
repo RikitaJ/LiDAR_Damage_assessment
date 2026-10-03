@@ -1,0 +1,13 @@
+{
+  "capture_id": "multi_room_stray_example",
+  "tier": "lidar",
+  "capture_format": "stray",
+  "device": { "model": "Stray Scanner", "has_lidar": true },
+  "rooms": [
+    { "room_id": "room_a", "name": "Room A", "segment": 0 },
+    { "room_id": "room_b", "name": "Room B", "segment": 1 }
+  ],
+  "adjacency": [
+    { "room_a": "room_a", "room_b": "room_b", "via_opening_id": "door_ab" }
+  ]
+}

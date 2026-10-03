@@ -31,6 +31,11 @@ single_scan_with_ceiling/
 depth/
 confidence/
 
+# Local company sample captures (not in git)
+single_room/
+single_scan_floor_only/
+single_scan_with_ceiling/
+
 # OS / IDE
 .DS_Store
 Thumbs.db

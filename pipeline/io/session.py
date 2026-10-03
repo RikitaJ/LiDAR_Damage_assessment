@@ -59,7 +59,7 @@ def load_session(capture_dir: Path, tier_hint: InputTier | None = None) -> Sessi
         tier = InputTier(tier_raw)
     except ValueError as e:
         raise ValueError(f"manifest.json: unknown tier '{tier_raw}'") from e
-    if tier == InputTier.VIDEO:
+    if tier in (InputTier.VIDEO, InputTier.PHOTOS):
         root = capture_dir
         entries = manifest["rooms"]
         rooms = [
@@ -78,6 +78,22 @@ def load_session(capture_dir: Path, tier_hint: InputTier | None = None) -> Sessi
                 continue
             adj.append((a, b, e.get("via_opening_id", "")))
         dev = manifest.get("device", {})
+        if tier == InputTier.PHOTOS:
+            photo_rooms: list[RoomPaths] = []
+            for entry in entries:
+                rid = entry["room_id"]
+                room_dir = capture_dir / "rooms" / rid
+                photo_rooms.append(
+                    RoomPaths(rid, entry.get("name", rid), room_dir),
+                )
+            return Session(
+                capture_id=manifest.get("capture_id", capture_dir.name),
+                tier=InputTier.PHOTOS,
+                device_model=dev.get("model", "photo capture"),
+                has_lidar=False,
+                rooms=photo_rooms,
+                adjacency=adj,
+            )
         return Session(
             capture_id=manifest.get("capture_id", capture_dir.name),
             tier=InputTier.VIDEO,

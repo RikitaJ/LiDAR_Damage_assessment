@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from pipeline.geometry.voxel import voxel_downsample
 from pipeline.schema.capture_frames import CaptureFrame, CaptureFrames
 
 try:
@@ -41,6 +42,7 @@ def collect_world_points(
         return None, warnings
 
     pts = np.vstack(chunks)
+    pts = voxel_downsample(pts)
     if len(pts) > 250_000:
         idx = np.linspace(0, len(pts) - 1, 250_000, dtype=int)
         pts = pts[idx]
@@ -89,6 +91,7 @@ def _frame_world_points(fr: CaptureFrame, stride: int, warnings: list[str]) -> n
 
 
 def _intrinsics_for_depth(K_rgb: np.ndarray, depth_w: int, depth_h: int) -> np.ndarray:
+    """Scale full-resolution intrinsics (Stray odometry fx/cx) to depth PNG size."""
     rgb_w = max(float(K_rgb[0, 2]) * 2.0, float(depth_w))
     rgb_h = max(float(K_rgb[1, 2]) * 2.0, float(depth_h))
     sx, sy = depth_w / rgb_w, depth_h / rgb_h

@@ -17,6 +17,8 @@ except ImportError:  # pragma: no cover
 
 
 VIDEO_NAMES = ("walkthrough.mp4", "walkthrough.mov", "video.mp4", "rgb.mp4", "capture.mp4")
+# Global scale: optical-flow units → metres (brief §4: no per-capture tuning).
+FLOW_STEP_METRES = 42.0
 
 
 def find_video_file(root: Path) -> Path | None:
@@ -68,7 +70,13 @@ def load_video_capture(root: Path, capture_id: str | None = None) -> CaptureFram
 
     keyframes = _extract_keyframes(video, target_fps=2.0, min_blur_var=80.0, warnings=warnings)
     if len(keyframes) < 3:
-        warnings.append("too few sharp keyframes; widen all intervals")
+        warnings.append("too few sharp keyframes; retrying with relaxed blur gate")
+        keyframes = _extract_keyframes(video, target_fps=2.0, min_blur_var=25.0, warnings=warnings)
+    if len(keyframes) < 3:
+        warnings.append("too few keyframes; using fixed-interval sampling")
+        keyframes = _extract_keyframes(video, target_fps=1.0, min_blur_var=0.0, warnings=warnings)
+    if len(keyframes) < 3:
+        warnings.append("too few frames for video geometry; widen all intervals")
 
     K = _default_intrinsics(keyframes[0]["width"], keyframes[0]["height"]) if keyframes else np.eye(3)
     frames = _poses_from_keyframes(keyframes, K)
@@ -189,9 +197,9 @@ def _flow_step(prev: np.ndarray, curr: np.ndarray) -> tuple[float, float]:
     prev_s = cv2.resize(prev, (160, 120))
     curr_s = cv2.resize(curr, (160, 120))
     flow = cv2.calcOpticalFlowFarneback(prev_s, curr_s, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-    fx = float(np.median(flow[..., 0])) * 0.002
-    fy = float(np.median(flow[..., 1])) * 0.002
-    step = float(np.hypot(fx, fy))
+    fx = float(np.median(flow[..., 0]))
+    fy = float(np.median(flow[..., 1]))
+    step = float(np.hypot(fx, fy)) * (0.002 * FLOW_STEP_METRES)
     dyaw = float(np.arctan2(fy, fx + 1e-6)) * 0.15
     return step, dyaw
 

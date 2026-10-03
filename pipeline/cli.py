@@ -97,8 +97,6 @@ def main() -> None:
     out_dir = args.out or (capture / "out")
     tier_override = None if args.tier == "auto" else InputTier(args.tier)
     tier = detect_tier(capture, tier_override)
-    if tier == InputTier.PHOTOS:
-        raise SystemExit("Photo tier not implemented yet. Use lidar, video, or auto.")
     drift_on = args.drift == "on" and not args.no_loop_closure
     cfg = RunConfig(tier=tier, loop_closure=drift_on, drift_correction=drift_on)
     print(run_capture(capture, out_dir, cfg))
