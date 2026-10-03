@@ -9,6 +9,7 @@ __pycache__/
 .cache/
 
 # Generated run outputs / old local sample leftovers
+/out/
 /examples/
 benchmark/raw/**/out*/
 data/captures/*

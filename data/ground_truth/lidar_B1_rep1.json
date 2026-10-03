@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "status": "complete",
+    "room": "B1",
+    "source": "Tape measure, 2026-10-03, two people. Reported as room 4.35 m x 5.60 m, ceiling 2.98 m.",
+    "assumptions": [
+      "Opposite walls equal: length and width were reported, not each of the four walls.",
+      "footprint_area_m2 = 4.35 x 5.60 (rectangular room). A separate rough estimate gave 24.8-25.0 m2.",
+      "Openings: 2 doors (entry, bathroom) and 2 windows. Widths not measured, so the opening-width gate is not scored."
+    ]
+  },
+  "footprint_area_m2": 24.36,
+  "ceiling_height_cm": {"R1": 298},
+  "wall_lengths_cm": {"R1": [435, 560, 435, 560]},
+  "opening_counts": {"R1": {"door": 2, "window": 2}},
+  "openings_cm": []
+}
