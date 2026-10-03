@@ -5,3 +5,4 @@ video_B1,video,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:39:11+05:30,TODO
 photos_B1_1x,photos,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:42:43+05:30,TODO,TODO,"8 HEIC IMG_9831-9838, 4032x3024, 1x (26 mm eq). sha256 TODO: zip the folder before upload. GPS in EXIF"
 photos_B1_05x,photos,iPhone 13 Pro,18.7.8,iOS Camera,B1,2026-10-03T15:45:28+05:30,TODO,TODO,"8 HEIC IMG_9839-9846, 0.5x (13-14 mm eq); IMG_9844 is portrait. sha256 TODO: zip the folder before upload. GPS in EXIF"
 example_capture,lidar,TODO,TODO,TODO,TODO,TODO,TODO,TODO,Fill url+sha256 then fetch to data/captures/example_capture/
+app_magicplan_B1,app,iPhone 13 Pro,18.7.8,magicplan 2026.38.0,B1,2026-10-03,TODO,TODO,Head-to-head scan of B1. Export needs a paid plan and screenshots were blocked; values read off the app are in data/app_exports/magicplan_lidar_B1_rep1.json

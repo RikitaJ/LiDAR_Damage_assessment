@@ -1,0 +1,16 @@
+{
+  "app": "magicplan",
+  "version": "2026.38.0",
+  "capture_id": "lidar_B1_rep1",
+  "room_id": "R1",
+  "source": "read off the app's plan on the phone, 2026-10-04 (the export needs a paid plan and screenshots were blocked)",
+  "lengths_m": {
+    "Wall 1": 4.34,
+    "Wall 3": 4.34,
+    "Ceiling height": 2.97,
+    "Door 1 width": 0.885,
+    "Window 1 width": 0.692
+  },
+  "floor_area_m2": 24.32,
+  "not_compared": "length 5.40 m (conflicts with the app's own area: 4.34 x 5.40 = 23.44 m², the app shows 24.32 m²; to be re-read), door height 2.01 m, window height 1.22 m, window sill 0.79 m (our output does not score opening heights)"
+}
