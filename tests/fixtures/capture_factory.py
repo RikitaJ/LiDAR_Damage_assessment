@@ -48,11 +48,11 @@ def write_mini_stray_capture(root: Path, *, n_frames: int = 4) -> None:
     )
 
 
-def write_mini_video_capture(root: Path) -> None:
+def write_mini_video_capture(root: Path, *, name: str = "walkthrough.mp4") -> None:
     import cv2
 
     root.mkdir(parents=True, exist_ok=True)
-    path = root / "walkthrough.mp4"
+    path = root / name
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(str(path), fourcc, 10.0, (64, 64))
     if not writer.isOpened():

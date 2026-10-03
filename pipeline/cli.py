@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from pipeline.benchmark.ablation import drift_ablation
+from pipeline.benchmark.ablation import drift_ablation, video_drift_ablation
 from pipeline.benchmark.gates import score, score_repeatability
 from pipeline.benchmark.report import write_benchmark_report
 from pipeline.config import InputTier, RunConfig
@@ -54,6 +54,10 @@ def main() -> None:
     ab.add_argument("--capture", type=Path, required=True)
     ab.add_argument("--out", type=Path, default=None)
 
+    abv = sub.add_parser("ablate-video-drift", help="Video tier drift on vs off (odometry metric path)")
+    abv.add_argument("--capture", type=Path, required=True)
+    abv.add_argument("--out", type=Path, default=None)
+
     args = p.parse_args()
 
     if args.cmd == "import-apple":
@@ -89,6 +93,15 @@ def main() -> None:
         out = args.out or (capture / "out" / "ablation")
         result = drift_ablation(capture, out)
         path = out / "drift_ablation.json"
+        path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return
+
+    if args.cmd == "ablate-video-drift":
+        capture = args.capture.resolve()
+        out = args.out or (capture / "out" / "video_ablation")
+        result = video_drift_ablation(capture, out)
+        path = out / "video_drift_ablation.json"
         path.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps(result, indent=2))
         return

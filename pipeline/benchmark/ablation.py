@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pipeline.config import RunConfig
-from pipeline.run import run_lidar
+from pipeline.config import InputTier, RunConfig
+from pipeline.run import run_capture, run_lidar
 
 
 def drift_ablation(capture_dir: Path, work_dir: Path) -> dict:
@@ -25,6 +25,32 @@ def drift_ablation(capture_dir: Path, work_dir: Path) -> dict:
         "footprint_loop_off_m2": off_fp,
         "delta_m2": delta,
         "relative_delta": rel,
+        "paths": {"on": str(on_dir / "plan.json"), "off": str(off_dir / "plan.json")},
+    }
+
+
+def video_drift_ablation(capture_dir: Path, work_dir: Path) -> dict:
+    work_dir.mkdir(parents=True, exist_ok=True)
+    on_dir = work_dir / "loop_on"
+    off_dir = work_dir / "loop_off"
+    run_capture(
+        capture_dir,
+        on_dir,
+        RunConfig(tier=InputTier.VIDEO, loop_closure=True, drift_correction=True),
+    )
+    run_capture(
+        capture_dir,
+        off_dir,
+        RunConfig(tier=InputTier.VIDEO, loop_closure=False, drift_correction=False),
+    )
+    on_fp = _footprint(on_dir / "plan.json")
+    off_fp = _footprint(off_dir / "plan.json")
+    delta = abs(on_fp - off_fp)
+    return {
+        "footprint_loop_on_m2": on_fp,
+        "footprint_loop_off_m2": off_fp,
+        "delta_m2": delta,
+        "relative_delta": delta / max(on_fp, 1e-6),
         "paths": {"on": str(on_dir / "plan.json"), "off": str(off_dir / "plan.json")},
     }
 

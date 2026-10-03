@@ -11,8 +11,8 @@ from pipeline.export.output import render_plan, write_plan
 from pipeline.io.session import load_session
 from pipeline.io.validate import sanitize_room
 from pipeline.stitch.stitch import stitch
-from pipeline.stitch.video_drift import apply_video_loop_to_rooms
 from pipeline.geometry.overlap import pairwise_overlap_m2
+from pipeline.frontends.video import find_video_file
 from pipeline.io.tier_detect import CaptureKind, detect_capture_kind
 from pipeline.tiers.lidar import parse_room
 from pipeline.tiers.stray_room_v0 import parse_stray_room
@@ -36,7 +36,9 @@ def _parse_room_paths(rp, tier: InputTier, config: RunConfig) -> tuple[dict, lis
     if tier == InputTier.PHOTOS:
         return parse_photo_room(rp.lidar_dir, rp.room_id, rp.name)
     if tier == InputTier.VIDEO:
-        return parse_video_room(rp.lidar_dir, rp.room_id, rp.name)
+        return parse_video_room(
+            rp.lidar_dir, rp.room_id, rp.name, drift_correction=config.drift_correction
+        )
     if _has_roomplan_json(rp.lidar_dir):
         return parse_room(rp.lidar_dir, rp.room_id, rp.name), warnings
     if (rp.lidar_dir / "odometry.csv").is_file():
@@ -88,10 +90,6 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         if orphans:
             qa_warnings.append(f"{r['room_id']}: orphan openings {orphans}")
         rooms_raw.append(r)
-
-    root = session.rooms[0].lidar_dir if session.rooms else capture_dir
-    if tier == InputTier.VIDEO:
-        qa_warnings.extend(apply_video_loop_to_rooms(rooms_raw, root, config.drift_correction))
 
     apply_drift = config.drift_correction
     rooms, stitched = stitch(
@@ -145,7 +143,7 @@ def _drift_block(session, tier: InputTier, loop_closure: bool) -> dict:
         return {
             "method": "video_flow_loop",
             "loop_closure_enabled": loop_closure,
-            "description": "Video v0: optical-flow path + optional loop nudge; no metric SLAM yet.",
+            "description": "Video: odometry metric path when rgb+odometry co-located; else optical-flow + scale.",
             "pose_graph_notes": "Use --drift on|off for loop closure on estimated path.",
         }
     stray = session.rooms and (session.rooms[0].lidar_dir / "odometry.csv").is_file()
@@ -182,6 +180,9 @@ def _models_used(session, tier: InputTier) -> list[str]:
             return ["photo_v0_prior", "azure_openai_vlm_optional", "shared_stitch"]
         return ["photo_v0_prior", "shared_stitch"]
     if tier == InputTier.VIDEO:
+        root = session.rooms[0].lidar_dir if session.rooms else None
+        if root and (root / "odometry.csv").is_file() and find_video_file(root):
+            return ["video_odometry_metric", "path_buffer_footprint", "shared_stitch"]
         return ["video_keyframes_v0", "optical_flow_poses", "odometry_scale_optional", "shared_stitch"]
     root = session.rooms[0].lidar_dir if session.rooms else None
     if root and (root / "odometry.csv").is_file():

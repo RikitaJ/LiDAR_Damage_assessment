@@ -1,0 +1,53 @@
+{
+  "phase": 3,
+  "tier": "video",
+  "scope": "v0 offline (odometry metric path when co-located with rgb.mp4)",
+  "runs": [
+    {
+      "capture": "c00a170fe1",
+      "status": "ok",
+      "footprint_m2": 52.32957277506856,
+      "models": [
+        "video_odometry_metric",
+        "path_buffer_footprint",
+        "shared_stitch"
+      ],
+      "plan": "single_room\\c00a170fe1\\out_phase3_signoff\\plan.json",
+      "png": "single_room\\c00a170fe1\\out_phase3_signoff\\floorplan.png"
+    },
+    {
+      "capture": "1a8384c3f6",
+      "status": "ok",
+      "footprint_m2": 160.15436039307568,
+      "models": [
+        "video_odometry_metric",
+        "path_buffer_footprint",
+        "shared_stitch"
+      ],
+      "plan": "single_scan_floor_only\\1a8384c3f6\\out_phase3_signoff\\plan.json",
+      "png": "single_scan_floor_only\\1a8384c3f6\\out_phase3_signoff\\floorplan.png"
+    },
+    {
+      "capture": "c7d28f72c6",
+      "status": "ok",
+      "footprint_m2": 203.9343087454566,
+      "models": [
+        "video_odometry_metric",
+        "path_buffer_footprint",
+        "shared_stitch"
+      ],
+      "plan": "single_scan_with_ceiling\\c7d28f72c6\\out_phase3_signoff\\plan.json",
+      "png": "single_scan_with_ceiling\\c7d28f72c6\\out_phase3_signoff\\floorplan.png"
+    }
+  ],
+  "video_drift_ablation_c00": {
+    "footprint_loop_on_m2": 52.32957277506856,
+    "footprint_loop_off_m2": 59.702243573583424,
+    "delta_m2": 7.372670798514861,
+    "relative_delta": 0.14088918383120128,
+    "paths": {
+      "on": "D:\\Rikita\\123\\AI_Challenge\\single_room\\c00a170fe1\\out_phase3_ablation\\loop_on\\plan.json",
+      "off": "D:\\Rikita\\123\\AI_Challenge\\single_room\\c00a170fe1\\out_phase3_ablation\\loop_off\\plan.json"
+    }
+  }
+}

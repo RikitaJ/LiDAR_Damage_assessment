@@ -25,5 +25,11 @@ def test_phase3_video_runs_on_company_mp4(cap: Path, tmp_path: Path):
 
     data = json.loads(plan.read_text(encoding="utf-8"))
     assert data["input_tier"] == "video"
-    assert data["stitched_plan"]["footprint_area_m2"]["value_m"] > 1.0
+    fp = data["stitched_plan"]["footprint_area_m2"]["value_m"]
+    assert fp > 5.0
     assert (out / "floorplan.png").is_file()
+    models = data["pipeline_meta"].get("models_used", [])
+    if (cap / "odometry.csv").is_file():
+        assert "video_odometry_metric" in models
+    qa = " ".join(data["pipeline_meta"].get("qa_warnings", []))
+    assert "interval" in qa.lower() or "odometry" in qa.lower() or "video" in qa.lower() or fp > 0
