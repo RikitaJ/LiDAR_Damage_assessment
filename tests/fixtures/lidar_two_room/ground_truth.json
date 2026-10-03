@@ -1,0 +1,16 @@
+{
+  "openings_cm": [
+    { "room_id": "living_room", "width_cm": 92, "kind": "door" },
+    { "room_id": "hallway", "width_cm": 90, "kind": "door" },
+    { "room_id": "living_room", "width_cm": 140, "kind": "window" }
+  ],
+  "ceiling_height_cm": {
+    "living_room": 260,
+    "hallway": 240
+  },
+  "footprint_area_m2": 17.4,
+  "wall_lengths_cm": {
+    "living_room": [420, 350, 420, 350],
+    "hallway": [200, 120, 200, 120]
+  }
+}

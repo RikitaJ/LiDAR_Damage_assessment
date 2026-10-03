@@ -19,33 +19,34 @@ Optional Azure (after `az login`):
 python scripts/_write_env_from_consolidated.py
 ```
 
-Copies keys from **rg-consolidated-plan-2026** into gitignored `.env` (Azure OpenAI + optional Vision hub).
+## Capture data
 
-## Run
+Real scans live under **`data/captures/<capture_id>/`** (not in git). See [data/README.md](data/README.md) and `data/manifest.csv` for downloads.
 
 ```powershell
-housefloor run --capture examples\benchmark_sample
-housefloor run --capture "single_room sample data_given\c00a170fe1" --tier auto
-housefloor run --capture "single_room sample data_given\c00a170fe1" --tier video
+housefloor run --capture data\captures\<your_capture_id>
+housefloor run --capture data\captures\<your_capture_id> --tier auto
 ```
-
-Output: `<capture>\out\plan.json` and `floorplan.png` (or `--out` path).
 
 ## Import Apple exports
 
 ```powershell
-housefloor import-apple --input C:\path\to\json_folder --out benchmark\raw\my_house
-housefloor run --capture benchmark\raw\my_house
+housefloor import-apple --input C:\path\to\json_folder --out data\captures\my_house
+housefloor run --capture data\captures\my_house
 ```
 
 ## Gates (Phase 2)
 
+Requires a local capture plus optional `ground_truth.json` next to the capture or passed to `score`.
+
 ```powershell
-housefloor score --capture examples\benchmark_sample
-housefloor ablate-drift --capture examples\benchmark_sample
+housefloor score --capture data\captures\<id>
+housefloor ablate-drift --capture data\captures\<id>
 ```
 
 ## Tests
+
+Uses **pytest fixtures only** (no bundled demo house in the repo):
 
 ```powershell
 $env:MPLBACKEND='Agg'; pytest tests -q

@@ -11,13 +11,12 @@ from pipeline.run import run_lidar
 from pipeline.stitch.stitch import stitch
 from pipeline.tiers.lidar import parse_room
 
-ROOT = Path(__file__).resolve().parents[1]
-SAMPLE = ROOT / "examples" / "benchmark_sample"
+from tests.fixtures.capture_factory import LIDAR_TWO_ROOM, copy_lidar_two_room
 
 
 def test_single_room_no_adjacency(tmp_path):
     cap = tmp_path / "one_room"
-    shutil.copytree(SAMPLE / "rooms" / "living_room", cap / "rooms" / "living_room")
+    shutil.copytree(LIDAR_TWO_ROOM / "rooms" / "living_room", cap / "rooms" / "living_room")
     (cap / "manifest.json").write_text(
         json.dumps(
             {
@@ -42,7 +41,7 @@ def test_missing_manifest(tmp_path):
 
 def test_manifest_adjacency_unknown_room_ignored(tmp_path):
     cap = tmp_path / "cap"
-    shutil.copytree(SAMPLE, cap)
+    copy_lidar_two_room(cap)
     manifest = json.loads((cap / "manifest.json").read_text(encoding="utf-8"))
     manifest["adjacency"] = [{"room_a": "living_room", "room_b": "ghost", "via_opening_id": "x"}]
     (cap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -62,7 +61,7 @@ def test_empty_rooms_manifest(tmp_path):
 
 def test_wrong_tier_rejected(tmp_path):
     cap = tmp_path / "bad_tier"
-    shutil.copytree(SAMPLE, cap)
+    copy_lidar_two_room(cap)
     manifest = json.loads((cap / "manifest.json").read_text(encoding="utf-8"))
     manifest["tier"] = "photos"
     (cap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -106,15 +105,16 @@ def test_stitch_three_rooms_chain(tmp_path):
 def test_import_apple_then_run(tmp_path):
     src = tmp_path / "in"
     src.mkdir()
-    shutil.copy(SAMPLE / "rooms" / "living_room" / "lidar" / "room.json", src / "living_room.json")
+    shutil.copy(LIDAR_TWO_ROOM / "rooms" / "living_room" / "lidar" / "room.json", src / "living_room.json")
     cap = tmp_path / "cap"
     import_apple(src, cap)
     out = run_lidar(cap, cap / "out", RunConfig())
     assert out.exists()
 
 
-def test_loop_closure_off_runs():
-    out = run_lidar(SAMPLE, SAMPLE / "out_no_lc", RunConfig(loop_closure=False))
+def test_loop_closure_off_runs(tmp_path: Path):
+    cap = copy_lidar_two_room(tmp_path / "cap")
+    out = run_lidar(cap, tmp_path / "out", RunConfig(loop_closure=False))
     plan = json.loads(out.read_text(encoding="utf-8"))
     assert plan["drift_handling"]["loop_closure_enabled"] is False
 

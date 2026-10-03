@@ -11,13 +11,12 @@ from pipeline.io.validate import sanitize_room
 from pipeline.run import run_lidar
 from pipeline.tiers.lidar import parse_room
 
-ROOT = Path(__file__).resolve().parents[1]
-SAMPLE = ROOT / "examples" / "benchmark_sample"
+from tests.fixtures.capture_factory import LIDAR_TWO_ROOM, copy_lidar_two_room
 
 
 def test_missing_tier_defaults_to_lidar(tmp_path):
     cap = tmp_path / "cap"
-    shutil.copytree(SAMPLE, cap)
+    copy_lidar_two_room(cap)
     manifest = json.loads((cap / "manifest.json").read_text(encoding="utf-8"))
     del manifest["tier"]
     (cap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -49,7 +48,7 @@ def test_negative_wall_length_sanitized():
 def test_import_apple_refuses_overwrite(tmp_path):
     src = tmp_path / "in"
     src.mkdir()
-    shutil.copy(SAMPLE / "rooms" / "living_room" / "lidar" / "room.json", src / "living.json")
+    shutil.copy(LIDAR_TWO_ROOM / "rooms" / "living_room" / "lidar" / "room.json", src / "living.json")
     out = tmp_path / "out"
     import_apple(src, out)
     with pytest.raises(FileExistsError):
@@ -76,7 +75,7 @@ def test_roomplan_column_major_transform(tmp_path):
 
 def test_run_with_bad_wall_injected(tmp_path):
     cap = tmp_path / "cap"
-    shutil.copytree(SAMPLE, cap)
+    copy_lidar_two_room(cap)
     lidar = cap / "rooms" / "living_room" / "lidar" / "room.json"
     data = json.loads(lidar.read_text(encoding="utf-8"))
     data["walls"][0]["dimensions"] = [float("nan"), 2.5, 0.1]

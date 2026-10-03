@@ -6,25 +6,30 @@ __pycache__/
 .env
 .env.*
 !.env.example
+.cache/
 
-# Generated run outputs (keep sample structure, ignore heavy regen)
-examples/**/out*/
-examples/**/out_*/
+# Generated run outputs / old local sample leftovers
+/examples/
 benchmark/raw/**/out*/
-single_room sample data_given/**/out*/
-single_room sample data_given/**/out_*/
+data/captures/*
+!data/captures/.gitkeep
 
-# Optional large local captures
+# Optional large local captures (brief rule 7)
 *.zip
-# Raw captures stay on Drive, not in git (brief rule 7)
 CAPTURE LOG*/
 single_room sample data_given/*/depth/
 single_room sample data_given/*/confidence/
 single_room sample data_given/*/rgb.mp4
+single_room/
+single_scan_floor_only/
+single_scan_with_ceiling/
+*.mp4
 *.mov
 *.MOV
 *.heic
 *.HEIC
+depth/
+confidence/
 
 # OS / IDE
 .DS_Store

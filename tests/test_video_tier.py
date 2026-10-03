@@ -1,19 +1,17 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from pipeline.config import InputTier, RunConfig
 from pipeline.run import run_capture
 
-ROOT = Path(__file__).resolve().parents[1]
-COMPANY = ROOT / "single_room sample data_given" / "c00a170fe1"
+from tests.fixtures.capture_factory import write_mini_video_capture
 
 
-@pytest.mark.skipif(not COMPANY.is_dir(), reason="company sample not present")
-def test_video_tier_on_mp4_folder():
-    out = COMPANY / "out_video_tier"
-    plan = run_capture(COMPANY, out, RunConfig(tier=InputTier.VIDEO))
+def test_video_tier_on_mp4_folder(tmp_path: Path):
+    cap = tmp_path / "video_cap"
+    write_mini_video_capture(cap)
+    out = tmp_path / "out"
+    plan = run_capture(cap, out, RunConfig(tier=InputTier.VIDEO))
     data = json.loads(plan.read_text(encoding="utf-8"))
     assert data["input_tier"] == "video"
     assert data["rooms"]

@@ -5,7 +5,7 @@ from pipeline.io.adjacency_infer import infer_adjacency
 from pipeline.io.apple_import import import_apple
 from pipeline.tiers.lidar import parse_room
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests.fixtures.capture_factory import LIDAR_TWO_ROOM
 
 
 def test_l_shape_polygon_area():
@@ -24,11 +24,10 @@ def test_l_shape_polygon_area():
 
 
 def test_import_infers_adjacency(tmp_path):
-    sample = ROOT / "examples" / "benchmark_sample"
     src = tmp_path / "in"
     src.mkdir()
     for name in ("living_room", "hallway"):
-        raw = sample / "rooms" / name / "lidar" / "room.json"
+        raw = LIDAR_TWO_ROOM / "rooms" / name / "lidar" / "room.json"
         (src / f"{name}.json").write_text(raw.read_text(encoding="utf-8"), encoding="utf-8")
     cap = tmp_path / "cap"
     import_apple(src, cap)

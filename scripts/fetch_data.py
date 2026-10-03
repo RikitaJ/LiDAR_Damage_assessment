@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 from pipeline.io.stray_zip import ingest_zip_to_capture  # noqa: E402
 MANIFEST = ROOT / "data" / "manifest.csv"
-DEFAULT_CAPTURE_ROOT = ROOT / "single_room sample data_given"
+DEFAULT_CAPTURE_ROOT = ROOT / "data" / "captures"
 
 
 def sha256_file(path: Path) -> str:
