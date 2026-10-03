@@ -4,7 +4,7 @@ Open items and answers between the two of us. Agents: read this after `git pull`
 
 ## Agreed
 
-- B1 accuracy (benchmark report and the README table) comes from pipeline version `52c7f46`, the version validated on our tape-measured room. Regenerate with `python -m eval.run --rerun --ref 52c7f46 --skip-current --readme README.md`. Never hand-edit `docs/BENCHMARK_REPORT.md` or the README block between the `benchmark` markers.
+- B1 accuracy (benchmark report, README table, device-matrix summary) comes from the current pipeline (changed 4 Oct, after the fix loop; it was `52c7f46` before). Regenerate with `python -m eval.run --rerun --readme README.md --summary-into docs/DEVICE_MATRIX.md`. Never hand-edit `docs/BENCHMARK_REPORT.md` or the blocks between the `benchmark` markers.
 - The company samples have no ground truth, so results on them are reported as consistency, not accuracy.
 
 ## Open for the Builder (from the Tester, 4 Oct)
@@ -22,6 +22,15 @@ Open items and answers between the two of us. Agents: read this after `git pull`
 7. **Photo folder layout.** Auto-detect expects `rooms/<room>/photos/`, but the capture protocol in the brief (§8) uses `photos_M/01_hallway/…`. One of them has to change before the walk-in.
 8. **Video tier on a plain iPhone video** has no metric scale yet.
 9. **`scripts/fetch_weights.py`** downloads MobileSAM without a sha256 check (brief rule 7).
+10. **Changed in your files, 4 Oct early morning (for the Drive links):**
+    - `scripts/fetch_data.py` accepts plain Drive share links (it converts them and gets past Drive's "can't scan for viruses" page). It also takes `--manifest` and `--dest`, and skips an archive that is already downloaded with the right sha256. Tested end to end on all seven zips through `file://` links: the four Stray captures unpack identical to `data/captures/`.
+    - `test_fetch_data_skips_todo_url` now uses a temporary manifest. With real links in `data/manifest.csv`, the old version would have downloaded every capture during `pytest`.
+    - `data/manifest.csv`: removed the `example_capture` template row. The three company rows have their zip sha256s, with "not provided" where the sample came without device details.
+
+## Before submission (deadline 4 Oct, 10:00 IST)
+
+- **Proposed: no `pipeline/` changes after 09:00 IST.** After any such change, rerun `python -m eval.run --rerun --readme README.md --summary-into docs/DEVICE_MATRIX.md`, `bash scripts/run_company_samples.sh` and `pytest tests -q`, and commit the regenerated files with the change, so the reported numbers match the code.
+- **Tester:** put the Drive links in `data/manifest.csv`, then check that `python scripts/fetch_data.py --dest <empty folder>` verifies every sha256.
 
 ## Answers
 
