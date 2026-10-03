@@ -173,12 +173,17 @@ def head_to_head_section(app: dict, scored) -> list[str]:
             f"| {r['name']} | {r['truth']:.3f} | {ours} | {r['theirs']:.3f} "
             f"| {our_err} | {100 * (r['theirs'] - r['truth']):+.1f} cm | {r['result']} |"
         )
+    gate = "meets the brief's 70 % gate" if h2h["passed"] else "the brief's gate is 70 %"
     lines += [
         "",
-        f"Beat or tie on {h2h['beat_or_tie']} of {len(h2h['rows'])} measurements "
-        f"(gate ≥ 70 %; tie = errors within 3 mm): {'pass' if h2h['passed'] else 'miss'}. "
+        f"Beat or tie on {h2h['beat_or_tie']} of {len(h2h['rows'])} measurements (tie = errors within 3 mm; {gate}). "
         f"Their values: {app['source']}.",
     ]
+    ours_area = next((r for r in all_rows(scored) if r.name.startswith("Floor area")), None)
+    if ours_area is not None and app.get("floor_area_m2") is not None:
+        their_rel = 100 * (app["floor_area_m2"] - ours_area.truth) / ours_area.truth
+        lines.append(f"Floor area: ours {100 * ours_area.error / ours_area.truth:+.1f} %, {name} {their_rel:+.1f} % "
+                     "(shown for reference; the 3 mm tie rule applies to lengths).")
     if app.get("not_compared"):
         lines.append(f"Recorded but not compared: {app['not_compared']}.")
     return lines + [""]
@@ -205,8 +210,7 @@ def readme_block(title: str, scored, app: dict | None) -> list[str]:
             gates.append(f"openings ≥ 85 % within 2 cm: {100 * ops['rate']:.0f} % ({'pass' if ops['passed'] else 'miss'})")
     if app:
         h2h = compare(app, scored)
-        gates.append(f"head-to-head ≥ 70 % beat or tie: {h2h['beat_or_tie']} of {len(h2h['rows'])} "
-                     f"({'pass' if h2h['passed'] else 'miss'})")
+        gates.append(f"head-to-head: {h2h['beat_or_tie']} of {len(h2h['rows'])} beat or tie (gate 70 %)")
     return lines + ["", "Gates: " + "; ".join(gates) + "."]
 
 

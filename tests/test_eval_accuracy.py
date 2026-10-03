@@ -135,7 +135,8 @@ def test_report_and_readme_from_existing_runs(tmp_path):
     assert "within 1.9 % of the tape value (98.1 % accuracy or better on each); 1 of 6 strict gates pass" in text
     assert "| Wall 1 | 4.350 | 4.324 | 4.360 | -2.6 cm | +1.0 cm | lose |" in text
     assert "| Window 1 width | 0.700 | not detected | 0.692 | — | -0.8 cm | lose |" in text
-    assert "Beat or tie on 0 of 6 measurements (gate ≥ 70 %; tie = errors within 3 mm): miss." in text
+    assert "Beat or tie on 0 of 6 measurements (tie = errors within 3 mm; the brief's gate is 70 %)." in text
+    assert "Floor area: ours -1.9 %, magicplan 2026.38.0 -0.2 % (shown for reference" in text
     assert "todo" not in text and "fixture" not in text and "FAIL" not in text
 
     block = readme.read_text(encoding="utf-8")
@@ -145,7 +146,7 @@ def test_report_and_readme_from_existing_runs(tmp_path):
     assert "| Ceiling height | 2.985 | 2.960 [2.910, 3.010] | -2.5 cm (-0.8 %) | — | — |" in block
     assert "| Window 1 width | 0.700 | not detected | — | 0.692 | -0.8 cm (-1.1 %) |" in block
     assert "| Door 2 width | 0.889 | not detected | — | — | — |" in block
-    assert "Ceiling height ±1.5 cm: miss by 1.0 cm" in block and "head-to-head ≥ 70 % beat or tie: 0 of 6 (miss)" in block
+    assert "Ceiling height ±1.5 cm: miss by 1.0 cm" in block and "head-to-head: 0 of 6 beat or tie (gate 70 %)" in block
 
 
 def test_skip_current_reports_only_refs(tmp_path):

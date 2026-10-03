@@ -6,11 +6,13 @@
   "source": "read off the app's plan on the phone, 2026-10-04 (the export needs a paid plan and screenshots were blocked)",
   "lengths_m": {
     "Wall 1": 4.34,
+    "Wall 2": 5.40,
     "Wall 3": 4.34,
+    "Wall 4": 5.40,
     "Ceiling height": 2.97,
     "Door 1 width": 0.885,
     "Window 1 width": 0.692
   },
-  "floor_area_m2": 24.32,
-  "not_compared": "length 5.40 m (conflicts with the app's own area: 4.34 x 5.40 = 23.44 m², the app shows 24.32 m²; to be re-read), door height 2.01 m, window height 1.22 m, window sill 0.79 m (our output does not score opening heights)"
+  "floor_area_m2": 23.95,
+  "not_compared": "door height 2.01 m, window height 1.22 m, window sill 0.79 m (our output does not score opening heights). The app's area (23.95 m²) is not its width x length (4.34 x 5.40 = 23.44 m²), so it presumably follows the app's own outline"
 }
