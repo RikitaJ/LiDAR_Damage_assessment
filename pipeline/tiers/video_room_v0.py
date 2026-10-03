@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
+
+import numpy as np
 
 from pipeline.config import InputTier
 from pipeline.frontends.stray_lidar import load_stray_capture
@@ -14,6 +17,9 @@ from pipeline.geometry.stray_points import collect_world_points
 from pipeline.geometry.stray_room import room_from_point_cloud
 from pipeline.geometry.video_scale import align_video_room_to_odometry
 from pipeline.tiers.stray_room_v0 import _room_from_trajectory
+
+VIDEO_TIER = InputTier.VIDEO
+MIN_PTS_DEPTH = 120
 
 
 def parse_video_room(
@@ -30,8 +36,9 @@ def parse_video_room(
 
     cf = load_video_capture(lidar_dir, capture_id=room_id)
     warnings = list(cf.warnings)
+    pose_w, _ = apply_loop_closure_to_poses(cf, enabled=drift_correction)
+    warnings.extend(pose_w)
 
-    # Optional Azure enrichment (env keys only — Quanta testing RG via .env)
     from pipeline.integrations.azure_optional import enrich_video_warnings
 
     warnings.extend(enrich_video_warnings(lidar_dir))
@@ -41,9 +48,13 @@ def parse_video_room(
     if pts is not None:
         pts, surf_warn = filter_points_and_warn(pts, cf)
         warnings.extend(surf_warn)
-        if len(pts) >= 120:
+        if len(pts) >= MIN_PTS_DEPTH:
             room, extra = room_from_point_cloud(
-                pts, room_id, name, scale_sigma_rel=cf.scale_sigma_rel
+                pts,
+                room_id,
+                name,
+                scale_sigma_rel=cf.scale_sigma_rel,
+                tier=VIDEO_TIER,
             )
             return _tag_video_tier(room), warnings + extra
 
@@ -66,14 +77,42 @@ def _parse_video_from_odometry(
     from pipeline.integrations.azure_optional import enrich_video_warnings
 
     warnings.extend(enrich_video_warnings(root))
+
+    rng = _rng_for_capture(cf.capture_id)
+    pts, pt_warn = collect_world_points(cf)
+    warnings.extend(pt_warn)
+    if pts is not None:
+        pts, surf_warn = filter_points_and_warn(pts, cf)
+        warnings.extend(surf_warn)
+        if drift_correction and len(pts) >= MIN_PTS_DEPTH:
+            room, extra = room_from_point_cloud(
+                pts,
+                room_id,
+                name,
+                scale_sigma_rel=cf.scale_sigma_rel,
+                rng=rng,
+                tier=VIDEO_TIER,
+            )
+            extra.insert(0, "video tier: metric odometry + depth fusion")
+            return _tag_video_tier(room), warnings + extra
+
+    if pts is not None and len(pts) >= 50 and not drift_correction:
+        warnings.append("video: depth fusion skipped when drift off; using path-buffer for ablation stability")
+    elif pts is not None and len(pts) >= 50:
+        warnings.append("video: sparse depth; path-buffer fallback with widened intervals")
     room, extra = _room_from_trajectory(cf, room_id, name, warnings, path_buffer=True)
     extra.insert(0, "video tier: metric path from co-located odometry.csv + rgb.mp4")
     return _tag_video_tier(room), warnings + extra
 
 
+def _rng_for_capture(capture_id: str) -> np.random.Generator:
+    seed = int(hashlib.sha256(capture_id.encode()).hexdigest()[:8], 16)
+    return np.random.default_rng(seed)
+
+
 def _tag_video_tier(room: dict[str, Any]) -> dict[str, Any]:
     """Ensure confidence notes mention video tier (σ already from InputTier in helpers)."""
-    tier_note = InputTier.VIDEO.value
+    tier_note = VIDEO_TIER.value
     for wall in room.get("walls", []):
         conf = wall.get("length_m", {}).get("confidence", {})
         conf["notes"] = f"{tier_note}; " + conf.get("notes", "")

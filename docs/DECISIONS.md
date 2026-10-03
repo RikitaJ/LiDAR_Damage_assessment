@@ -32,6 +32,10 @@
 
 Multi-room placement shifts the child room along the door-wall inward normal (centroid projection) so footprints are not stacked on the same door point; overlap resolution re-locks doors instead of centroid nudges. Wall gates use cyclic rotation matching (not sorted lengths) per brief §5.9. Stitched footprint uses **union of room world bboxes** (`stitched_footprint_area_m2`) so multi-room plans are not scored as the largest single polygon only.
 
+## Video tier completion (Phase 3, 2026-10-03)
+
+Metric `--tier video` on Stray folders uses odometry loop closure, then **depth fusion** when enough points (same as LiDAR Stray), else path-buffer footprint. Flow-only clips get loop closure + optional odometry scale. COLMAP deferred (optional phase scope).
+
 ## Video tier v0 (Phase 3, 2026-10-03)
 
 **What:** `pipeline/frontends/video.py` keyframes + optical-flow poses → same `CaptureFrames` / stitch / render path as Stray; `--tier video` or video-only folder; optional Azure env hook (offline by default).

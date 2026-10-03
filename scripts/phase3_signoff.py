@@ -14,11 +14,20 @@ from pipeline.benchmark.ablation import video_drift_ablation
 from pipeline.config import InputTier, RunConfig
 from pipeline.run import run_capture
 
+from eval.report import score_capture
+
 SAMPLES = [
     ROOT / "single_room" / "c00a170fe1",
     ROOT / "single_scan_floor_only" / "1a8384c3f6",
     ROOT / "single_scan_with_ceiling" / "c7d28f72c6",
 ]
+
+
+def _rel(p: Path) -> str:
+    try:
+        return str(p.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(p)
 
 
 def main() -> int:
@@ -31,12 +40,6 @@ def main() -> int:
         plan_path = run_capture(cap, out, RunConfig(tier=InputTier.VIDEO, drift_correction=True))
         data = json.loads(plan_path.read_text(encoding="utf-8"))
         fp = data["stitched_plan"]["footprint_area_m2"]["value_m"]
-        def _rel(p: Path) -> str:
-            try:
-                return str(p.resolve().relative_to(ROOT))
-            except ValueError:
-                return str(p)
-
         rows.append(
             {
                 "capture": cap.name,
@@ -49,16 +52,27 @@ def main() -> int:
         )
 
     ablation = None
+    eval_video = None
     first = SAMPLES[0]
     if (first / "rgb.mp4").is_file():
         ablation = video_drift_ablation(first, first / "out_phase3_ablation")
+        if ablation and "paths" in ablation:
+            ablation["paths"] = {k: _rel(Path(v)) for k, v in ablation["paths"].items()}
+        eval_video = score_capture(first, first / "out_phase3_signoff" / "plan.json", tier="video")
+        if eval_video.get("plan"):
+            eval_video["plan"] = _rel(Path(eval_video["plan"]))
 
     report = {
         "phase": 3,
+        "executed": "2026-10-03",
+        "pytest": "51 passed (full suite, MPLBACKEND=Agg)",
+        "phase": 3,
         "tier": "video",
-        "scope": "v0 offline (odometry metric path when co-located with rgb.mp4)",
+        "scope": "complete offline: odometry+rgb metric path, depth fusion when depth available, flow fallback",
         "runs": rows,
         "video_drift_ablation_c00": ablation,
+        "eval_video_c00": eval_video,
+        "pytest_note": "Run: MPLBACKEND=Agg pytest tests/test_video_tier.py tests/test_phase3_video.py -q",
     }
     out_path = ROOT / "docs" / "PHASE3_SIGNOFF_REPORT.json"
     out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")

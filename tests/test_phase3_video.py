@@ -31,5 +31,9 @@ def test_phase3_video_runs_on_company_mp4(cap: Path, tmp_path: Path):
     models = data["pipeline_meta"].get("models_used", [])
     if (cap / "odometry.csv").is_file():
         assert "video_odometry_metric" in models
+        assert any(
+            m in models
+            for m in ("depth_fusion_footprint", "path_buffer_footprint")
+        )
     qa = " ".join(data["pipeline_meta"].get("qa_warnings", []))
     assert "interval" in qa.lower() or "odometry" in qa.lower() or "video" in qa.lower() or fp > 0

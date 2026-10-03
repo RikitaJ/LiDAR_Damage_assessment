@@ -130,7 +130,7 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
             "command": "housefloor run --capture <capture_dir>",
             "capture_dir": str(capture_dir.name),
             "duration_s": round(time.time() - t0, 2),
-            "models_used": _models_used(session, tier),
+            "models_used": _models_used(session, tier, rooms_raw),
             "qa_warnings": qa_warnings,
             "overlap_m2": round(overlap, 4),
         },
@@ -165,6 +165,16 @@ def _drift_block(session, tier: InputTier, loop_closure: bool) -> dict:
     }
 
 
+def _video_used_depth_fusion(rooms: list[dict] | None) -> bool:
+    if not rooms:
+        return False
+    for room in rooms:
+        notes = str(room.get("floor_area_m2", {}).get("confidence", {}).get("notes", ""))
+        if "stray_floor_occupancy" in notes or "stray_depth_planes" in notes:
+            return True
+    return False
+
+
 def _concealed_flags_from_qa(qa_warnings: list[str]) -> list[dict]:
     flags: list[dict] = []
     for w in qa_warnings:
@@ -174,7 +184,7 @@ def _concealed_flags_from_qa(qa_warnings: list[str]) -> list[dict]:
     return flags
 
 
-def _models_used(session, tier: InputTier) -> list[str]:
+def _models_used(session, tier: InputTier, rooms: list[dict] | None = None) -> list[str]:
     if tier == InputTier.PHOTOS:
         from pipeline.integrations.azure_optional import _env, _load_dotenv_once
 
@@ -185,7 +195,11 @@ def _models_used(session, tier: InputTier) -> list[str]:
     if tier == InputTier.VIDEO:
         root = session.rooms[0].lidar_dir if session.rooms else None
         if root and (root / "odometry.csv").is_file() and find_video_file(root):
+            if _video_used_depth_fusion(rooms):
+                return ["video_odometry_metric", "depth_fusion_footprint", "shared_stitch"]
             return ["video_odometry_metric", "path_buffer_footprint", "shared_stitch"]
+        if _video_used_depth_fusion(rooms):
+            return ["video_keyframes_v0", "optical_flow_poses", "depth_fusion_footprint", "shared_stitch"]
         return ["video_keyframes_v0", "optical_flow_poses", "odometry_scale_optional", "shared_stitch"]
     root = session.rooms[0].lidar_dir if session.rooms else None
     if root and (root / "odometry.csv").is_file():

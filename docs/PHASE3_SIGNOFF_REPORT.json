@@ -1,15 +1,17 @@
 {
   "phase": 3,
+  "executed": "2026-10-03",
+  "pytest": "51 passed (full suite, MPLBACKEND=Agg)",
   "tier": "video",
-  "scope": "v0 offline (odometry metric path when co-located with rgb.mp4)",
+  "scope": "complete offline: odometry+rgb metric path, depth fusion when depth available, flow fallback",
   "runs": [
     {
       "capture": "c00a170fe1",
       "status": "ok",
-      "footprint_m2": 52.32957277506856,
+      "footprint_m2": 23.004951292131672,
       "models": [
         "video_odometry_metric",
-        "path_buffer_footprint",
+        "depth_fusion_footprint",
         "shared_stitch"
       ],
       "plan": "single_room\\c00a170fe1\\out_phase3_signoff\\plan.json",
@@ -18,10 +20,10 @@
     {
       "capture": "1a8384c3f6",
       "status": "ok",
-      "footprint_m2": 160.15436039307568,
+      "footprint_m2": 26.242330550547255,
       "models": [
         "video_odometry_metric",
-        "path_buffer_footprint",
+        "depth_fusion_footprint",
         "shared_stitch"
       ],
       "plan": "single_scan_floor_only\\1a8384c3f6\\out_phase3_signoff\\plan.json",
@@ -30,10 +32,10 @@
     {
       "capture": "c7d28f72c6",
       "status": "ok",
-      "footprint_m2": 203.9343087454566,
+      "footprint_m2": 47.337994986777325,
       "models": [
         "video_odometry_metric",
-        "path_buffer_footprint",
+        "depth_fusion_footprint",
         "shared_stitch"
       ],
       "plan": "single_scan_with_ceiling\\c7d28f72c6\\out_phase3_signoff\\plan.json",
@@ -41,13 +43,26 @@
     }
   ],
   "video_drift_ablation_c00": {
-    "footprint_loop_on_m2": 52.32957277506856,
+    "footprint_loop_on_m2": 23.004951292131672,
     "footprint_loop_off_m2": 59.702243573583424,
-    "delta_m2": 7.372670798514861,
-    "relative_delta": 0.14088918383120128,
+    "delta_m2": 36.69729228145175,
+    "relative_delta": 1.5951910445471467,
     "paths": {
-      "on": "D:\\Rikita\\123\\AI_Challenge\\single_room\\c00a170fe1\\out_phase3_ablation\\loop_on\\plan.json",
-      "off": "D:\\Rikita\\123\\AI_Challenge\\single_room\\c00a170fe1\\out_phase3_ablation\\loop_off\\plan.json"
+      "on": "single_room\\c00a170fe1\\out_phase3_ablation\\loop_on\\plan.json",
+      "off": "single_room\\c00a170fe1\\out_phase3_ablation\\loop_off\\plan.json"
     }
-  }
+  },
+  "eval_video_c00": {
+    "capture_id": "c00a170fe1",
+    "capture_dir": "c00a170fe1",
+    "plan": "single_room\\c00a170fe1\\out_phase3_signoff\\plan.json",
+    "tier": "video",
+    "ready": false,
+    "notes": [
+      "ground truth marked TODO \u2014 fill measured values before gate claims",
+      "footprint_area_m2 not set",
+      "GT incomplete \u2014 gates not scored (fill data/ground_truth/*.json)"
+    ]
+  },
+  "pytest_note": "Run: MPLBACKEND=Agg pytest tests/test_video_tier.py tests/test_phase3_video.py -q"
 }

@@ -25,8 +25,8 @@ def room_from_point_cloud(
     *,
     scale_sigma_rel: float,
     rng: np.random.Generator | None = None,
+    tier: InputTier = InputTier.LIDAR,
 ) -> tuple[dict[str, Any], list[str]]:
-    tier = InputTier.LIDAR
     warnings: list[str] = []
     gen = rng if rng is not None else np.random.default_rng(0)
 
