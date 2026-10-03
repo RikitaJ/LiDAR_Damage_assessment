@@ -11,7 +11,7 @@ dependencies = [
   "matplotlib>=3.8",
   "networkx>=3.2",
   "pillow>=10.0",
-  "opencv-python-headless>=4.8",
+  "opencv-python-headless>=4.8,<5",
 ]
 
 [project.optional-dependencies]
