@@ -12,6 +12,13 @@ def test_c00_gt_marked_todo():
     assert any("TODO" in n for n in notes)
 
 
+def test_lidar_fixture_gt_ready():
+    gt, notes = load_ground_truth("lidar_two_room_fixture")
+    assert gt is not None
+    assert gt_ready_for_gates(gt)
+    assert not any("TODO" in n for n in notes)
+
+
 def test_score_capture_without_complete_gt(tmp_path):
     cap = tmp_path / "cap1"
     cap.mkdir()

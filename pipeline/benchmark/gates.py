@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pipeline.benchmark.wall_match import wall_pass_rate
+
 
 @dataclass
 class GateResult:
@@ -94,8 +96,8 @@ def score_repeatability(plan_a: Path, plan_b: Path, tier: str = "lidar") -> Gate
     signed_deltas: list[float] = []
 
     for rid in common:
-        la = sorted(w["length_m"]["value_m"] for w in by_a[rid]["walls"])
-        lb = sorted(w["length_m"]["value_m"] for w in by_b[rid]["walls"])
+        la = [w["length_m"]["value_m"] for w in by_a[rid]["walls"]]
+        lb = [w["length_m"]["value_m"] for w in by_b[rid]["walls"]]
         n = min(len(la), len(lb))
         for i in range(n):
             d = abs(la[i] - lb[i])
@@ -250,27 +252,19 @@ def _score_walls(
     gt_walls = gt.get("wall_lengths_cm", {})
     if not gt_walls:
         return {"pass_rate": 0.0, "rooms": []}
-    ok = 0
+    ok = 0.0
     total = 0
     rows = []
     for room in sorted(plan.get("rooms", []), key=lambda r: r["room_id"]):
         rid = room["room_id"]
         if rid not in gt_walls:
             continue
-        pred = sorted(w["length_m"]["value_m"] * 100.0 for w in room["walls"])
-        truth = sorted(float(x) for x in gt_walls[rid])
-        n = min(len(pred), len(truth))
-        if len(pred) != len(truth):
-            total += max(len(pred), len(truth)) - n
-        for i in range(n):
-            total += 1
-            err_cm = abs(pred[i] - truth[i])
-            err_rel = err_cm / max(truth[i], 1e-6)
-            pass_wall = (
-                err_cm <= tol_cm if tol_cm is not None else err_rel <= tol_rel
-            )
-            if pass_wall:
-                ok += 1
-            rows.append({"room_id": rid, "index": i, "err_cm": err_cm, "rel_error": err_rel})
+        pred = [w["length_m"]["value_m"] * 100.0 for w in room["walls"]]
+        truth = [float(x) for x in gt_walls[rid]]
+        rate, match_rows = wall_pass_rate(pred, truth, tol_cm=tol_cm, tol_rel=tol_rel)
+        ok += rate * len(truth)
+        total += len(truth)
+        for row in match_rows:
+            rows.append({"room_id": rid, **row})
     rate = ok / total if total else 0.0
     return {"pass_rate": rate, "rooms": rows}

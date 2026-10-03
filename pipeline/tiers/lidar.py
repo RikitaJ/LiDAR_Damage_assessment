@@ -61,7 +61,11 @@ def parse_room(lidar_dir: Path, room_id: str, name: str) -> dict[str, Any]:
         else:
             orphan_openings.append(op["id"])
 
-    area = polygon_area_from_walls(walls_out) or _rect_area_from_walls(walls_out) or floor_area_m2(walls_out)
+    area = (
+        polygon_area_from_walls(walls_out)
+        or floor_area_m2(walls_out)
+        or _rect_area_from_walls(walls_out)
+    )
     ceiling = _ceiling_m(data)
 
     return {

@@ -18,6 +18,7 @@ def test_all_lidar_gates_on_sample(tmp_path: Path):
     assert p["ceiling_1p5cm"]
     assert p["walls_tier"]
     assert p["stitch_no_overlap"]
+    assert p["footprint_tier"]
     assert p["calibration_sane"]
 
 

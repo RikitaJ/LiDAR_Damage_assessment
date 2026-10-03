@@ -1,0 +1,22 @@
+{
+  "phase": "1-2",
+  "executed": "2026-10-03",
+  "runs": [
+    {
+      "check": "lidar_two_room_fixture",
+      "status": "ok",
+      "footprint_m2": 17.1,
+      "notes": "All LiDAR gates pass vs data/ground_truth/lidar_two_room_fixture.json"
+    },
+    {
+      "check": "stray_mini_capture",
+      "status": "ok",
+      "models": ["stray_scanner_v0", "trajectory_or_depth_geometry"]
+    },
+    {
+      "check": "drift_ablation",
+      "status": "ok"
+    }
+  ],
+  "pytest": "51 passed (MPLBACKEND=Agg)"
+}

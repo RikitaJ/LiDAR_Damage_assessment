@@ -12,7 +12,12 @@ import numpy as np
 def render_plan(stitched: dict, rooms: list[dict], out_png: Path) -> str:
     fig, ax = plt.subplots(figsize=(14, 14))
     ax.set_aspect("equal")
-    ax.set_title("Stitched floor plan (m)")
+    fp = stitched.get("footprint_area_m2") or {}
+    fp_v = fp.get("value_m", fp.get("value"))
+    title = "Stitched floor plan (m)"
+    if fp_v is not None:
+        title += f" — footprint {float(fp_v):.1f} m²"
+    ax.set_title(title)
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Z (m)")
     ax.grid(True, alpha=0.25)

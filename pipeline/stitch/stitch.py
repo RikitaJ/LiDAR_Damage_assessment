@@ -8,7 +8,7 @@ import networkx as nx
 import numpy as np
 
 from pipeline.config import InputTier
-from pipeline.geometry.floor_polygon import floor_area_m2
+from pipeline.geometry.floor_polygon import floor_area_m2, stitched_footprint_area_m2
 from pipeline.geometry.overlap import pairwise_overlap_m2
 from pipeline.measure.confidence import area_m2
 
@@ -36,7 +36,11 @@ def stitch(
         _place_chain(rooms, g, apply_drift)
 
     global_walls = _walls_in_world(rooms)
-    footprint = floor_area_m2(global_walls) or sum(r["floor_area_m2"]["value_m"] for r in rooms)
+    footprint = (
+        stitched_footprint_area_m2(rooms)
+        or floor_area_m2(global_walls)
+        or sum(r["floor_area_m2"]["value_m"] for r in rooms)
+    )
 
     stitched = {
         "footprint_area_m2": area_m2(footprint, tier),
@@ -155,6 +159,9 @@ def _place_by_doors(
                 da, db = _matched_door_points(by_id[src], by_id[anchor], opening_id)
                 if da is not None and db is not None:
                     poses[src] = poses[anchor] + (db - da)
+                    _separate_across_shared_door(
+                        by_id[src], by_id[anchor], poses, src, anchor, opening_id
+                    )
                 else:
                     poses[src] = poses[anchor] + np.array([4.0, 0.0])
                 progress = True
@@ -168,18 +175,7 @@ def _place_by_doors(
             poses[r["room_id"]] = np.array([4.0 * len(poses), 0.0])
 
     if loop_closure:
-        for a, b, _ in edges:
-            if a in poses and b in poses:
-                d = poses[a] - poses[b]
-                if np.linalg.norm(d) > 0.01:
-                    poses[b] += d * 0.12
-
-    if loop_closure:
-        _apply_poses(rooms, poses)
-        for _ in range(6):
-            if pairwise_overlap_m2(rooms) <= 0.05:
-                break
-            _nudge_apart_overlapping(rooms, by_id, poses, edges)
+        _resolve_overlap_keep_doors(rooms, by_id, poses, edges)
 
     for r in rooms:
         tx, tz = poses[r["room_id"]]
@@ -194,28 +190,93 @@ def _apply_poses(rooms: list[dict], poses: dict[str, np.ndarray]) -> None:
             r["pose_world"] = {"translation_m": [float(tx), 0.0, float(tz)], "rotation_quat": [0, 0, 0, 1]}
 
 
-def _nudge_apart_overlapping(
+WALL_HALF_THICKNESS_M = 0.12
+
+
+def _separate_across_shared_door(
+    src_room: dict,
+    anchor_room: dict,
+    poses: dict[str, np.ndarray],
+    src_id: str,
+    anchor_id: str,
+    opening_id: str,
+) -> None:
+    """Shift src so room footprints sit on opposite sides of the shared door (not stacked)."""
+    da, db = _matched_door_points(src_room, anchor_room, opening_id)
+    if da is None or db is None:
+        return
+    normal = _interior_normal_from_door(src_room, opening_id)
+    if normal is None:
+        cs = _centroid_local(src_room)
+        ca = _centroid_local(anchor_room)
+        normal = cs - ca
+    norm = float(np.linalg.norm(normal))
+    if norm < 1e-6:
+        normal = np.array([0.0, 1.0])
+    else:
+        normal = normal / norm
+    cs = np.array(_centroid_local(src_room), dtype=float)
+    shift = float(np.dot(cs - da, normal))
+    if shift < 0.15:
+        shift = min(_room_span(src_room), 2.5) * 0.42
+    poses[src_id] = poses[anchor_id] + (db - da) + normal * shift
+
+
+def _interior_normal_from_door(room: dict, opening_id: str) -> np.ndarray | None:
+    for w in room["walls"]:
+        pl = w.get("polyline_m") or []
+        if len(pl) < 2:
+            continue
+        for op in w["openings"]:
+            if op.get("kind") != "door":
+                continue
+            if opening_id and op.get("id") != opening_id:
+                continue
+            p0 = np.array(pl[0], dtype=float)
+            p1 = np.array(pl[1], dtype=float)
+            tangent = p1 - p0
+            tl = float(np.linalg.norm(tangent))
+            if tl < 1e-6:
+                continue
+            tangent = tangent / tl
+            normal = np.array([-tangent[1], tangent[0]], dtype=float)
+            mid = (p0 + p1) * 0.5
+            centroid = _centroid_local(room)
+            if np.dot(centroid - mid, normal) < 0:
+                normal = -normal
+            return normal
+    return None
+
+
+def _resolve_overlap_keep_doors(
     rooms: list[dict],
     by_id: dict[str, dict],
     poses: dict[str, np.ndarray],
     edges: list[tuple[str, str, str]],
 ) -> None:
-    """Small additive nudge — keeps door alignment, removes substantial bbox overlap."""
-    for a, b, _ in edges:
-        for src, anchor in ((a, b), (b, a)):
-            if src not in poses or anchor not in poses:
-                continue
-            _apply_poses(rooms, poses)
-            if pairwise_overlap_m2(rooms) <= 0.05:
-                continue
-            ca = _centroid_world(by_id[anchor], poses[anchor])
-            cs = _centroid_world(by_id[src], poses[src])
-            direction = cs - ca
-            if float(np.linalg.norm(direction)) < 0.05:
-                direction = np.array([1.0, 0.0])
-            else:
-                direction = direction / np.linalg.norm(direction)
-            poses[src] = poses[src] + direction * 0.65
+    for _ in range(8):
+        _apply_poses(rooms, poses)
+        if pairwise_overlap_m2(rooms) <= 0.05:
+            return
+        moved = False
+        for a, b, opening_id in edges:
+            for src, anchor in ((a, b), (b, a)):
+                if src not in poses or anchor not in poses:
+                    continue
+                normal = _interior_normal_from_door(by_id[src], opening_id)
+                if normal is None:
+                    continue
+                da, db = _matched_door_points(by_id[src], by_id[anchor], opening_id)
+                if da is None or db is None:
+                    continue
+                cs = np.array(_centroid_local(by_id[src]), dtype=float)
+                shift = float(np.dot(cs - da, normal))
+                if shift < 0.15:
+                    shift = min(_room_span(by_id[src]), 2.5) * 0.42
+                poses[src] = poses[anchor] + (db - da) + normal * (shift + WALL_HALF_THICKNESS_M)
+                moved = True
+        if not moved:
+            break
 
 
 def _centroid_world(room: dict, pose: np.ndarray) -> np.ndarray:

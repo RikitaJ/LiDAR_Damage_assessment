@@ -24,9 +24,12 @@ def _has_roomplan_json(lidar_dir: Path) -> bool:
     for name in ("room.json", "captured_room.json"):
         if (lidar_dir / name).is_file():
             return True
-    skip = {"manifest.json", "ground_truth.json", "plan.json"}
-    for p in lidar_dir.glob("*.json"):
-        if p.name not in skip and "walls" in p.read_text(encoding="utf-8")[:800]:
+    skip = {"manifest.json", "ground_truth.json", "plan.json", "package.json"}
+    for p in sorted(lidar_dir.glob("*.json")):
+        if p.name in skip:
+            continue
+        head = p.read_text(encoding="utf-8")[:800]
+        if '"walls"' in head and '"transform"' in head:
             return True
     return False
 

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pipeline.benchmark.gates import score
 
+from eval.capture_id import resolve_capture_id
 from eval.gt_loader import gt_ready_for_gates, load_ground_truth
 
 
@@ -18,13 +19,14 @@ def score_capture(
     tier: str = "lidar",
 ) -> dict:
     capture_dir = capture_dir.resolve()
-    capture_id = capture_dir.name
+    capture_id = resolve_capture_id(capture_dir)
     if plan_path is None:
         plan_path = capture_dir / "out" / "plan.json"
     plan_path = plan_path.resolve()
 
     out: dict = {
         "capture_id": capture_id,
+        "capture_dir": capture_dir.name,
         "plan": str(plan_path),
         "tier": tier,
         "ready": False,
