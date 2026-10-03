@@ -1,0 +1,1 @@
+"""Tier front-ends → CaptureFrames."""

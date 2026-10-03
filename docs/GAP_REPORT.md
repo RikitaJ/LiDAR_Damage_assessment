@@ -30,7 +30,7 @@ Read-only audit (brief §11) on a scratch copy of HEAD, fresh venvs, Win 11, Py 
 
 ## 2. Phase plan → build order (§9)
 
-`docs/PHASES.md` runs depth-first (LiDAR/RoomPlan → gates → video → photo + Azure VLM → damage → benchmark) and blocks Phase 3 on real Apple JSON (`docs/PHASE1_PHASE2_COMPLETE.md:15`). §9 is breadth-first, and ~21 h remain.
+`docs/PHASES.md` runs depth-first (LiDAR/RoomPlan → gates → video → photo + Azure VLM → damage → benchmark). §9 is breadth-first, and ~21 h remain.
 
 - **Keep:** CLI skeleton, validate-on-write, input errors (`io/session.py`), overlap QA (`geometry/overlap.py`), `GateResult`, error-path tests.
 - **Change P1 → M1–M2:** Stray Scanner → `CaptureFrames` → point geometry in one global frame, real `--drift on|off`; park RoomPlan/`import-apple` unless the h2h app exports RoomPlan JSON (?). **P2:** gates move to `eval/` (Tester) with R18–R24 fixes and GT from `data/ground_truth/*.yaml`.

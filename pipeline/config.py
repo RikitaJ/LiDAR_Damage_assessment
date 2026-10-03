@@ -33,3 +33,4 @@ SIGMA = {
 class RunConfig:
     tier: InputTier = InputTier.LIDAR
     loop_closure: bool = True
+    drift_correction: bool = True

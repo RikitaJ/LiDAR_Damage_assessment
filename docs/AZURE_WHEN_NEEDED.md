@@ -1,14 +1,19 @@
-# Azure (later phases only — not used in Phase 1)
+# Azure (this project uses Azure only — no OpenAI.com or Hugging Face keys)
 
-Phase 1 uses **Apple RoomPlan JSON only**. No Azure calls.
+Phases 1–3 (LiDAR, Stray, video v0) run **offline**. Azure is wired for **Phase 4+** only.
 
-When we reach **Phase 4 (photos)** you may enable:
+## Env vars (see `.env.example`)
 
-| Azure product | Purpose | Env vars |
-|---------------|---------|----------|
-| **Azure OpenAI** (GPT-4o / GPT-4o-mini with vision) | Guess room layout from photos when geometry is weak | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT` |
-| **Azure AI Vision** (optional, Phase 5) | Extra tags for damage cues | `AZURE_VISION_KEY`, `AZURE_VISION_ENDPOINT` |
+| Azure product | When | Variables |
+|---------------|------|-----------|
+| **Azure OpenAI** (`conplan-openai-2026`, deploy `gpt-4o`) | Photo tier VLM | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION` |
+| **Azure AI hub** (`MyAIHub`, optional) | Phase 5 damage / tagging | `AZURE_VISION_KEY`, `AZURE_VISION_ENDPOINT` |
 
-In Azure Portal search: **Azure OpenAI** → create resource → deploy a **gpt-4o** (or gpt-4o-mini) model → copy endpoint + key.
+## Populate `.env` locally
 
-We will add code in Phase 4 behind `housefloor run --tier photos` only. LiDAR accuracy does not depend on Azure.
+```powershell
+az login
+python scripts/_write_env_from_consolidated.py
+```
+
+Resource group: **rg-consolidated-plan-2026**. Never commit `.env`.

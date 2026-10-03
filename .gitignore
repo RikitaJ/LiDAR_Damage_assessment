@@ -11,6 +11,8 @@ __pycache__/
 examples/**/out*/
 examples/**/out_*/
 benchmark/raw/**/out*/
+single_room sample data_given/**/out*/
+single_room sample data_given/**/out_*/
 
 # Optional large local captures
 *.zip

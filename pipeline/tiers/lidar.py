@@ -29,6 +29,8 @@ def parse_room(lidar_dir: Path, room_id: str, name: str) -> dict[str, Any]:
     for i, wall in enumerate(raw_walls):
         dims = wall.get("dimensions") or [0, 0, 0]
         length = float(dims[0])
+        if length <= 0 or not np.isfinite(length):
+            raise ValueError(f"Room {room_id}: wall {wall.get('identifier')} invalid length {dims[0]}")
         T = _transform(wall.get("transform"), wid := wall.get("identifier") or f"wall_{i}")
         w = {
             "id": wid,
@@ -77,7 +79,7 @@ def _opening_anchor(obj: dict) -> list[float] | None:
     raw = obj.get("transform")
     if not raw or len(raw) != 16:
         return None
-    T = np.array(raw, dtype=float).reshape(4, 4)
+    T = _transform(raw, "opening")
     return [float(T[0, 3]), float(T[2, 3])]
 
 
@@ -85,7 +87,8 @@ def _transform(raw: list | None, wall_id: str) -> np.ndarray:
     flat = list(raw) if raw is not None else np.eye(4).flatten().tolist()
     if len(flat) != 16:
         raise ValueError(f"Wall {wall_id}: transform must have 16 numbers, got {len(flat)}")
-    return np.array(flat, dtype=float).reshape(4, 4)
+    # RoomPlan / ARKit: 4×4 stored column-major (Fortran order).
+    return np.array(flat, dtype=float).reshape(4, 4, order="F")
 
 
 def _find_json(lidar_dir: Path) -> Path:
@@ -93,7 +96,7 @@ def _find_json(lidar_dir: Path) -> Path:
         p = lidar_dir / name
         if p.is_file():
             return p
-    files = list(lidar_dir.glob("*.json"))
+    files = sorted(lidar_dir.glob("*.json"))
     if not files:
         raise FileNotFoundError(f"No JSON in {lidar_dir}")
     return files[0]

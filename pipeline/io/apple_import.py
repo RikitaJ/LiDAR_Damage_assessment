@@ -9,9 +9,19 @@ from pathlib import Path
 from pipeline.io.adjacency_infer import infer_adjacency
 
 
-def import_apple(input_dir: Path, out_dir: Path, capture_id: str | None = None) -> Path:
+def import_apple(
+    input_dir: Path,
+    out_dir: Path,
+    capture_id: str | None = None,
+    *,
+    overwrite: bool = False,
+) -> Path:
     input_dir, out_dir = input_dir.resolve(), out_dir.resolve()
     if out_dir.exists():
+        if not overwrite:
+            raise FileExistsError(
+                f"{out_dir} already exists; pass overwrite=True or choose a new --out path"
+            )
         shutil.rmtree(out_dir)
     rooms_root = out_dir / "rooms"
     rooms_root.mkdir(parents=True)
@@ -43,7 +53,7 @@ def import_apple(input_dir: Path, out_dir: Path, capture_id: str | None = None) 
     manifest = {
         "capture_id": capture_id or out_dir.name,
         "tier": "lidar",
-        "device": {"model": "iPhone 15 Pro", "has_lidar": True},
+        "device": {"model": "imported_roomplan", "has_lidar": True},
         "rooms": entries,
         "adjacency": adjacency,
     }

@@ -41,6 +41,9 @@
       "required": ["value_m", "confidence"],
       "properties": {
         "value_m": { "type": "number" },
+        "value": { "type": "number" },
+        "lo": { "type": "number" },
+        "hi": { "type": "number" },
         "confidence": {
           "type": "object",
           "required": ["sigma_m", "tier_floor_m"],

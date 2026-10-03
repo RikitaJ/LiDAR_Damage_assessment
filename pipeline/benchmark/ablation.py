@@ -13,8 +13,8 @@ def drift_ablation(capture_dir: Path, work_dir: Path) -> dict:
     work_dir.mkdir(parents=True, exist_ok=True)
     on_dir = work_dir / "loop_on"
     off_dir = work_dir / "loop_off"
-    run_lidar(capture_dir, on_dir, RunConfig(loop_closure=True))
-    run_lidar(capture_dir, off_dir, RunConfig(loop_closure=False))
+    run_lidar(capture_dir, on_dir, RunConfig(loop_closure=True, drift_correction=True))
+    run_lidar(capture_dir, off_dir, RunConfig(loop_closure=False, drift_correction=False))
 
     on_fp = _footprint(on_dir / "plan.json")
     off_fp = _footprint(off_dir / "plan.json")

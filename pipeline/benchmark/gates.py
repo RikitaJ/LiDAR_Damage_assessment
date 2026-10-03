@@ -30,12 +30,13 @@ def score(
     tol_ceil_cm = 1.5
     tol_ceil_spread_cm = 1.0
     footprint_tol = {"lidar": 0.02, "video": 0.03, "photos": 0.08}.get(tier, 0.08)
-    wall_tol = {"lidar": 0.02, "video": 0.03, "photos": 0.08}.get(tier, 0.08)
+    wall_tol_rel = {"video": 0.03, "photos": 0.08}.get(tier, 0.08)
+    wall_tol_cm = {"lidar": 2.0, "video": 3.0}.get(tier, None)
 
     opening = _score_openings(plan, gt, tol_open_cm)
     ceiling = _score_ceilings(plan, gt, tol_ceil_cm)
     footprint = _score_footprint(plan, gt, footprint_tol)
-    walls = _score_walls(plan, gt, wall_tol)
+    walls = _score_walls(plan, gt, wall_tol_rel, wall_tol_cm)
     overlap = _score_overlap(plan)
     calibration = _score_calibration(plan)
 
@@ -47,7 +48,9 @@ def score(
     passed = {
         "opening_85pct_2cm": opening["pass_rate"] >= 0.85 and opening["phantom_count"] == 0,
         "ceiling_1p5cm": ceiling["all_pass"],
-        "ceiling_repeat_spread_1cm": ceil_repeat.get("pass", True),
+        "ceiling_repeat_spread_1cm": (
+            True if ceil_repeat.get("skipped") else bool(ceil_repeat.get("pass", False))
+        ),
         "footprint_tier": footprint["pass"],
         "walls_tier": walls["pass_rate"] >= 0.85,
         "stitch_no_overlap": overlap["pass"],
@@ -238,25 +241,36 @@ def _score_footprint(plan: dict, gt: dict, tol: float) -> dict:
     return {"pass": err <= tol, "error_pct": err}
 
 
-def _score_walls(plan: dict, gt: dict, tol_rel: float) -> dict:
+def _score_walls(
+    plan: dict,
+    gt: dict,
+    tol_rel: float,
+    tol_cm: float | None,
+) -> dict:
     gt_walls = gt.get("wall_lengths_cm", {})
     if not gt_walls:
         return {"pass_rate": 0.0, "rooms": []}
     ok = 0
     total = 0
     rows = []
-    for room in plan.get("rooms", []):
+    for room in sorted(plan.get("rooms", []), key=lambda r: r["room_id"]):
         rid = room["room_id"]
         if rid not in gt_walls:
             continue
         pred = sorted(w["length_m"]["value_m"] * 100.0 for w in room["walls"])
         truth = sorted(float(x) for x in gt_walls[rid])
         n = min(len(pred), len(truth))
+        if len(pred) != len(truth):
+            total += max(len(pred), len(truth)) - n
         for i in range(n):
             total += 1
-            err = abs(pred[i] - truth[i]) / truth[i]
-            if err <= tol_rel:
+            err_cm = abs(pred[i] - truth[i])
+            err_rel = err_cm / max(truth[i], 1e-6)
+            pass_wall = (
+                err_cm <= tol_cm if tol_cm is not None else err_rel <= tol_rel
+            )
+            if pass_wall:
                 ok += 1
-            rows.append({"room_id": rid, "index": i, "rel_error": err})
+            rows.append({"room_id": rid, "index": i, "err_cm": err_cm, "rel_error": err_rel})
     rate = ok / total if total else 0.0
     return {"pass_rate": rate, "rooms": rows}

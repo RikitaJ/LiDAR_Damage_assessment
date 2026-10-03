@@ -1,0 +1,2 @@
+capture_id,tier,device,ios_version,app_and_version,rooms,date_time,url,sha256,notes
+c00a170fe1,lidar,TODO,TODO,Stray Scanner,TODO,TODO,TODO,TODO,Company single-room sample; run scripts/fetch_data.py after URL+sha256 filled; depth+confidence not in git

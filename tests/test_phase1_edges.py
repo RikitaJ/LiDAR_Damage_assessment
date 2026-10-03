@@ -40,6 +40,18 @@ def test_missing_manifest(tmp_path):
         load_session(tmp_path)
 
 
+def test_manifest_adjacency_unknown_room_ignored(tmp_path):
+    cap = tmp_path / "cap"
+    shutil.copytree(SAMPLE, cap)
+    manifest = json.loads((cap / "manifest.json").read_text(encoding="utf-8"))
+    manifest["adjacency"] = [{"room_a": "living_room", "room_b": "ghost", "via_opening_id": "x"}]
+    (cap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    session = load_session(cap)
+    assert session.adjacency == []
+    out = run_lidar(cap, cap / "out", RunConfig())
+    assert out.exists()
+
+
 def test_empty_rooms_manifest(tmp_path):
     (tmp_path / "manifest.json").write_text(
         json.dumps({"tier": "lidar", "rooms": []}), encoding="utf-8"
@@ -54,7 +66,7 @@ def test_wrong_tier_rejected(tmp_path):
     manifest = json.loads((cap / "manifest.json").read_text(encoding="utf-8"))
     manifest["tier"] = "photos"
     (cap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    with pytest.raises(ValueError, match="Phase 1"):
+    with pytest.raises(ValueError, match="Session tier photos"):
         run_lidar(cap, cap / "out", RunConfig())
 
 

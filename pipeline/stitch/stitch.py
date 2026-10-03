@@ -9,6 +9,7 @@ import numpy as np
 
 from pipeline.config import InputTier
 from pipeline.geometry.floor_polygon import floor_area_m2
+from pipeline.geometry.overlap import pairwise_overlap_m2
 from pipeline.measure.confidence import area_m2
 
 
@@ -17,7 +18,10 @@ def stitch(
     tier: InputTier,
     adjacency_hints: list[tuple[str, str, str]],
     loop_closure: bool,
+    *,
+    drift_correction: bool | None = None,
 ) -> tuple[list[dict], dict]:
+    apply_drift = loop_closure if drift_correction is None else drift_correction
     rooms = deepcopy(rooms)
     edges = adjacency_hints or _infer_adjacency(rooms)
     g = nx.Graph()
@@ -27,9 +31,9 @@ def stitch(
         g.add_edge(a, b, opening_id=oid)
 
     if tier == InputTier.LIDAR and edges:
-        _place_by_doors(rooms, edges, loop_closure)
+        _place_by_doors(rooms, edges, apply_drift)
     else:
-        _place_chain(rooms, g, loop_closure)
+        _place_chain(rooms, g, apply_drift)
 
     global_walls = _walls_in_world(rooms)
     footprint = floor_area_m2(global_walls) or sum(r["floor_area_m2"]["value_m"] for r in rooms)
@@ -39,6 +43,7 @@ def stitch(
         "adjacency": [{"room_a": a, "room_b": b, "via_opening_id": oid} for a, b, oid in edges],
         "global_walls": global_walls,
         "render_path": "",
+        "drift_correction_applied": apply_drift,
     }
     return rooms, stitched
 
@@ -62,8 +67,6 @@ def _infer_adjacency(rooms: list[dict]) -> list[tuple[str, str, str]]:
             best = min(((oa, ob, abs(wa - wb)) for oa, wa in da for ob, wb in db), key=lambda t: t[2])
             if best[2] < 0.25:
                 out.append((a, b, best[0]))
-    if not out and len(ids) >= 2:
-        out.append((ids[0], ids[1], "inferred"))
     return out
 
 
@@ -144,6 +147,8 @@ def _place_by_doors(
     for _ in range(max(len(rooms) * 2, 1)):
         progress = False
         for a, b, opening_id in edges:
+            if a not in by_id or b not in by_id:
+                continue
             for src, anchor in ((a, b), (b, a)):
                 if anchor not in poses or src in poses:
                     continue
@@ -167,33 +172,55 @@ def _place_by_doors(
             if a in poses and b in poses:
                 d = poses[a] - poses[b]
                 if np.linalg.norm(d) > 0.01:
-                    poses[b] += d * 0.05
+                    poses[b] += d * 0.12
 
-    _separate_overlapping(rooms, by_id, poses, edges)
+    if loop_closure:
+        _apply_poses(rooms, poses)
+        for _ in range(6):
+            if pairwise_overlap_m2(rooms) <= 0.05:
+                break
+            _nudge_apart_overlapping(rooms, by_id, poses, edges)
 
     for r in rooms:
         tx, tz = poses[r["room_id"]]
         r["pose_world"] = {"translation_m": [float(tx), 0.0, float(tz)], "rotation_quat": [0, 0, 0, 1]}
 
 
-def _separate_overlapping(
+def _apply_poses(rooms: list[dict], poses: dict[str, np.ndarray]) -> None:
+    for r in rooms:
+        rid = r["room_id"]
+        if rid in poses:
+            tx, tz = poses[rid]
+            r["pose_world"] = {"translation_m": [float(tx), 0.0, float(tz)], "rotation_quat": [0, 0, 0, 1]}
+
+
+def _nudge_apart_overlapping(
     rooms: list[dict],
     by_id: dict[str, dict],
     poses: dict[str, np.ndarray],
     edges: list[tuple[str, str, str]],
 ) -> None:
+    """Small additive nudge — keeps door alignment, removes substantial bbox overlap."""
     for a, b, _ in edges:
         for src, anchor in ((a, b), (b, a)):
             if src not in poses or anchor not in poses:
                 continue
-            ca = _centroid_local(by_id[anchor])
-            cs = _centroid_local(by_id[src])
+            _apply_poses(rooms, poses)
+            if pairwise_overlap_m2(rooms) <= 0.05:
+                continue
+            ca = _centroid_world(by_id[anchor], poses[anchor])
+            cs = _centroid_world(by_id[src], poses[src])
             direction = cs - ca
             if float(np.linalg.norm(direction)) < 0.05:
                 direction = np.array([1.0, 0.0])
-            direction = direction / np.linalg.norm(direction)
-            push = _room_span(by_id[src]) * 0.55 + _room_span(by_id[anchor]) * 0.45
-            poses[src] = poses[anchor] + direction * push
+            else:
+                direction = direction / np.linalg.norm(direction)
+            poses[src] = poses[src] + direction * 0.65
+
+
+def _centroid_world(room: dict, pose: np.ndarray) -> np.ndarray:
+    local = _centroid_local(room)
+    return local + pose
 
 
 def _centroid_local(room: dict) -> np.ndarray:
