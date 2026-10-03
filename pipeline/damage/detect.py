@@ -14,6 +14,8 @@ from pipeline.damage.cache import (
     write_image_hits,
     write_vision_tags,
 )
+from pipeline.damage.cluster import cluster_cross_view_hits
+from pipeline.damage.photo_pose import enrich_hit_for_photo_tier
 from pipeline.damage.project import (
     annotate_opening_geometry,
     fuse_vision_with_regions,
@@ -50,8 +52,8 @@ def detect_damage_regions(
     if len(images) == 1:
         warnings.append("damage: single RGB still — limited multi-view confidence")
 
-    provisional: list[dict] = []
-    seq = 0
+    hit_pairs: list[tuple[dict, dict]] = []
+    vision_pass: list[tuple[Path, dict, list[str]]] = []
     cache_reads = 0
     rooms_without_walls: set[str] = set()
     unreadable = 0
@@ -62,7 +64,9 @@ def detect_damage_regions(
             continue
         room = room_for_image(capture_root, img, rooms)
         if not room:
-            warnings.append(f"damage: no room for image {img.name}")
+            warnings.append(
+                f"damage: no room folder for image {img.name} (use rooms/<id>/photos/ in multi-room)"
+            )
             continue
         rid = room.get("room_id", "?")
         if not (room.get("walls") or []):
@@ -78,15 +82,22 @@ def detect_damage_regions(
         if w and any("unreadable" in x for x in w):
             unreadable += 1
         for hit in hits:
-            seq += 1
-            reg = hit_to_region(hit, room, tier, f"D{seq}")
-            if reg:
-                provisional.append(reg)
+            hit_pairs.append((room, enrich_hit_for_photo_tier(img, hit, room, tier)))
 
         tags, tw = _vision_tags_for_image(img)
         warnings.extend(tw)
         if tags:
-            provisional = fuse_vision_with_regions(provisional, tags, room, tier)
+            vision_pass.append((img, room, tags))
+
+    hit_pairs = cluster_cross_view_hits(hit_pairs)
+    provisional: list[dict] = []
+    for seq, (room, hit) in enumerate(hit_pairs, start=1):
+        reg = hit_to_region(hit, room, tier, f"D{seq}")
+        if reg:
+            provisional.append(reg)
+
+    for _img, room, tags in vision_pass:
+        provisional = fuse_vision_with_regions(provisional, tags, room, tier)
 
     if cache_reads:
         warnings.append(f"damage: {cache_reads} image cue(s) from .cache/damage")

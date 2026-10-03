@@ -54,7 +54,41 @@ def build_scope_line_items(
                         "because": [dmg.get("id", ""), *[f["id"] for f in concealed_flags if sid in f.get("surfaces", [])]],
                     }
                 )
+    items.extend(_moisture_items_from_concealed(concealed_flags, by_surface, tier))
     return items
+
+
+_MOISTURE_CONCEALED = frozenset({"CD-01", "CD-02"})
+
+
+def _moisture_items_from_concealed(
+    concealed_flags: list[dict],
+    by_surface: dict[str, dict],
+    tier: InputTier,
+) -> list[dict]:
+    out: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for flag in concealed_flags:
+        rid = flag.get("rule_id")
+        if rid not in _MOISTURE_CONCEALED:
+            continue
+        for sid in flag.get("surfaces") or []:
+            key = (sid, "MOISTURE-INSP")
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "id": f"S-moist-{len(out) + 1}",
+                    "surface_id": sid,
+                    "code": "MOISTURE-INSP",
+                    "description": "Moisture inspection (concealed-damage rule)",
+                    "unit": "each",
+                    "quantity": with_interval(1.0, 0.0, notes=f"concealed_{rid}", tier=tier, kind="opening"),
+                    "because": [flag.get("id", ""), *(flag.get("triggered_by") or [])],
+                }
+            )
+    return out
 
 
 def _quantity(kind: str | None, dmg: dict, surf: dict | None, tier: InputTier) -> dict:
@@ -72,6 +106,11 @@ def _quantity(kind: str | None, dmg: dict, surf: dict | None, tier: InputTier) -
 
 
 def _damage_area(dmg: dict) -> float:
+    poly = dmg.get("polygon_surface")
+    if poly and len(poly) >= 3:
+        area = _polygon_area_m2(poly)
+        if area > 0:
+            return area
     fa = dmg.get("area_m2") or dmg.get("floor_area_m2")
     if isinstance(fa, dict):
         return float(fa.get("value_m", 0.05))
@@ -79,3 +118,18 @@ def _damage_area(dmg: dict) -> float:
         return float(fa) if fa else 0.05
     except (TypeError, ValueError):
         return 0.05
+
+
+def _polygon_area_m2(poly: list) -> float:
+    try:
+        pts = [(float(p[0]), float(p[1])) for p in poly]
+    except (TypeError, ValueError, IndexError):
+        return 0.0
+    if len(pts) < 3:
+        return 0.0
+    area = 0.0
+    for i in range(len(pts)):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % len(pts)]
+        area += x0 * y1 - x1 * y0
+    return abs(area) / 2.0

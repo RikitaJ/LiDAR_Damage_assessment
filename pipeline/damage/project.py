@@ -18,7 +18,9 @@ def room_for_image(capture_root: Path, image_path: Path, rooms: list[dict]) -> d
         photos = (capture_root / "rooms" / room["room_id"] / "photos").resolve()
         if photos in resolved.parents or resolved.parent == photos:
             return room
-    return rooms[0] if rooms else None
+    if len(rooms) == 1:
+        return rooms[0]
+    return None
 
 
 def pick_wall_id(room: dict, *, cls: str, hit: dict | None = None) -> str | None:
@@ -92,8 +94,8 @@ def hit_to_region(
             u0 = u_frac * wl * 0.85
             area_tmp = max(float(hit.get("area_m2", 0.1)), 0.04)
             w = min((area_tmp**0.5) * 1.15, wl * 0.45)
-        area = max(float(hit.get("area_m2", 0.1)), 0.04)
-        h = min((area**0.5) * 0.85, (ceil_m * 0.55 if not is_ceiling else wl * 0.35))
+        h = min((max(float(hit.get("area_m2", 0.1)), 0.04) ** 0.5) * 0.85, (ceil_m * 0.55 if not is_ceiling else wl * 0.35))
+        area = max(w * h, 0.04)
         bottom_m = float(hit.get("bottom_above_floor_m", 0.15))
         if is_ceiling:
             bottom_m = 0.05

@@ -63,6 +63,7 @@ def test_scope_from_water_stain():
     codes = {i["code"] for i in items}
     assert "PAINT-WALL" in codes
     assert "STAIN-BLOCK-PRIME" in codes
+    assert "MOISTURE-INSP" in codes
 
 
 def test_run_damage_pipeline_qa_concealed():
