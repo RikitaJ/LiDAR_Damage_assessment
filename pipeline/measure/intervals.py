@@ -9,6 +9,18 @@ INTERVAL_Z = 1.645
 _DEFAULT_TIER = InputTier.LIDAR
 
 
+def interval_notes(field: dict | None, default: str = "") -> str:
+    """Read provenance notes from a measurement dict (schema v0)."""
+    if not field:
+        return default
+    conf = field.get("confidence")
+    if isinstance(conf, dict) and conf.get("notes"):
+        return str(conf["notes"])
+    if field.get("notes"):
+        return str(field["notes"])
+    return default
+
+
 def with_interval(
     value: float,
     sigma: float,

@@ -32,6 +32,26 @@
 
 Multi-room placement shifts the child room along the door-wall inward normal (centroid projection) so footprints are not stacked on the same door point; overlap resolution re-locks doors instead of centroid nudges. Wall gates use cyclic rotation matching (not sorted lengths) per brief §5.9. Stitched footprint uses **union of room world bboxes** (`stitched_footprint_area_m2`) so multi-room plans are not scored as the largest single polygon only.
 
+## Photo tier v0 (Phase 4, 2026-10-03)
+
+Per-room folders → offline rectangle prior; optional Azure GPT-4o vision when `.env` keys present (cached under `.cache/photo_vlm`). Multi-room stitch uses **§5.6 layout solver** (`photo_layout`: door width pairing, 90° rotations, overlap penalty) when manifest adjacency is empty; otherwise manifest edges drive placement. Scale σ widens intervals from still count + VLM use. **Rejected:** folder names as adjacency hints; LiDAR `_place_by_doors` alone for photos (stacked footprints).
+
+## Photo tier completion (Phase 4 v1, 2026-10-03)
+
+**What:** Auto session from `rooms/*/photos/`; OpenCV sparse MVS scale cue; combined scale σ; Manhattan L-shapes; VLM `openings[]` (doors/windows); hub-style multi-edge adjacency inference; ORB doorway verification warnings; up to 8 stills to VLM.
+
+**Why:** Close brief §5.4–5.6 gaps without shipping large MVS weights; keep cold walk-in offline-capable.
+
+**Rejected:** Downloading multi-GB MapAnything/VGGT weights inside this repo (document as future hook); using folder names for adjacency.
+
+## Photo accuracy pass (Phase 4 v2, 2026-10-03)
+
+**What:** Door/ceiling prior metric rescale on VLM JSON; rectangle consistency (opposite walls + area); implausible VLM reject; two-batch median VLM when ≥6 stills; Hough aspect hint for offline/VLM refine; σ widened when metric cues disagree.
+
+**Why:** Move photo wall/footprint toward ±8% without dense MVS weights.
+
+**Rejected:** Ceiling-as-horizontal-scale (would distort walls); third VLM batch (cost/latency).
+
 ## Video tier completion (Phase 3, 2026-10-03)
 
 Metric `--tier video` on Stray folders uses odometry loop closure, then **depth fusion** when enough points (same as LiDAR Stray), else path-buffer footprint. Flow-only clips get loop closure + optional odometry scale. COLMAP deferred (optional phase scope).

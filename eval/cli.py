@@ -15,6 +15,10 @@ def main() -> None:
     sub = p.add_subparsers(dest="cmd", required=True)
     cal = sub.add_parser("calibrate", help="Fit configs/calibration.json from lidar_two_room fixture")
     cal.set_defaults(cmd="calibrate")
+    tpl = sub.add_parser("gt-template", help="Create data/ground_truth/<capture_id>.json skeleton")
+    tpl.add_argument("--capture", type=Path, required=True)
+    tpl.add_argument("--overwrite", action="store_true")
+    tpl.set_defaults(cmd="gt-template")
     sc = sub.add_parser("score", help="Gate report for one capture")
     sc.add_argument("--capture", type=Path, required=True)
     sc.add_argument("--plan", type=Path, default=None)
@@ -25,6 +29,13 @@ def main() -> None:
     if args.cmd == "calibrate":
         path = fit_and_write()
         print(path.read_text(encoding="utf-8"))
+        return
+
+    if args.cmd == "gt-template":
+        from eval.gt_template import write_gt_template
+
+        out = write_gt_template(args.capture.resolve(), overwrite=args.overwrite)
+        print(out)
         return
 
     path = write_report(args.capture.resolve(), args.out, plan_path=args.plan, tier=args.tier)

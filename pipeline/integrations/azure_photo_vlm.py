@@ -13,7 +13,30 @@ from pathlib import Path
 from pipeline.integrations.azure_optional import _env, _load_dotenv_once
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / ".cache" / "photo_vlm"
-MAX_IMAGES = 3
+MAX_IMAGES = 8
+
+
+def estimate_room_from_photos_merged(photo_paths: list[Path]) -> tuple[dict | None, list[str]]:
+    """Two spaced VLM batches merged by median when ≥6 stills (accuracy)."""
+    from pipeline.geometry.photo_metric import merge_vlm_estimates
+    from pipeline.frontends.photo_pick import pick_spaced_photos
+
+    warnings: list[str] = []
+    if len(photo_paths) < 6:
+        return estimate_room_from_photos(photo_paths)
+
+    half = max(3, len(photo_paths) // 2)
+    batch_a = pick_spaced_photos(photo_paths, half)
+    batch_b = pick_spaced_photos(list(reversed(photo_paths)), half)
+    e1, w1 = estimate_room_from_photos(batch_a)
+    e2, w2 = estimate_room_from_photos(batch_b)
+    warnings.extend(w1)
+    warnings.extend(w2)
+    merged = merge_vlm_estimates([e for e in (e1, e2) if e])
+    if merged:
+        warnings.append("photo_vlm: merged two VLM batches (median)")
+        return merged, warnings
+    return e1 or e2, warnings
 
 
 def estimate_room_from_photos(photo_paths: list[Path]) -> tuple[dict | None, list[str]]:
@@ -47,6 +70,18 @@ def estimate_room_from_photos(photo_paths: list[Path]) -> tuple[dict | None, lis
         _write_cache(cache_key, est)
         warnings.append("photo_vlm: Azure OpenAI layout estimate applied")
     return est, warnings
+
+
+def _image_mime(suffix: str) -> str:
+    if suffix in (".jpg", ".jpeg"):
+        return "image/jpeg"
+    if suffix in (".png",):
+        return "image/png"
+    if suffix in (".webp",):
+        return "image/webp"
+    if suffix in (".heic", ".heif"):
+        return "image/heic"
+    return "image/jpeg"
 
 
 def _cache_key(paths: list[Path]) -> str:
@@ -83,10 +118,18 @@ def _call_azure(
         {
             "type": "text",
             "text": (
-                "Estimate a single rectangular room from these photos. "
+                "Estimate one room from these photos (Manhattan walls). "
                 "Reply with JSON only: "
                 '{"floor_area_m2": number, "ceiling_height_m": number, '
-                '"wall_lengths_m": [4 numbers in metres clockwise from first wall]}. '
+                '"wall_lengths_m": [4+ numbers metres clockwise], '
+                '"openings": [{"kind":"door|window", "wall_index": int, '
+                '"width_m": number, "height_m": number, "sill_m": number|null}], '
+                '"door_height_m": number|null, '
+                '"main_door_image_height_fraction": number|null, '
+                '"door_on_wall": int|null, "door_width_m": number|null}. '
+                "Prefer openings[] for doors and windows. "
+                "door_height_m = visible door height in metres; "
+                "main_door_image_height_fraction = door height / full image height (0-1). "
                 "If unsure, use null fields."
             ),
         }
@@ -96,7 +139,7 @@ def _call_azure(
         if len(raw) > 4_000_000:
             raw = raw[:4_000_000]
         b64 = base64.b64encode(raw).decode("ascii")
-        mime = "image/jpeg" if p.suffix.lower() in (".jpg", ".jpeg") else "image/png"
+        mime = _image_mime(p.suffix.lower())
         content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
 
     body = json.dumps(

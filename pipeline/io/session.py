@@ -50,8 +50,17 @@ def load_session(capture_dir: Path, tier_hint: InputTier | None = None) -> Sessi
 
     manifest_path = capture_dir / "manifest.json"
     if not manifest_path.is_file():
+        from pipeline.io.photo_capture import session_from_photo_folders
+
+        auto = session_from_photo_folders(capture_dir)
+        if auto is not None:
+            if tier_hint is not None and tier_hint != auto.tier:
+                raise ValueError(
+                    f"Session tier {auto.tier.value} != requested {tier_hint.value}"
+                )
+            return auto
         raise FileNotFoundError(
-            f"Missing {manifest_path}. Expected manifest.json or Stray Scanner files (odometry.csv)."
+            f"Missing {manifest_path}. Expected manifest.json, photo room folders, or Stray Scanner."
         )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     tier_raw = manifest.get("tier", "lidar")

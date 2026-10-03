@@ -10,6 +10,7 @@ class CaptureKind(str, Enum):
     ROOMPLAN_MANIFEST = "roomplan_manifest"
     STRAY_SCANNER = "stray_scanner"
     VIDEO_ONLY = "video_only"
+    PHOTO_FOLDERS = "photo_folders"
     UNKNOWN = "unknown"
 
 
@@ -34,6 +35,10 @@ def detect_capture_kind(capture_dir: Path) -> CaptureKind:
 
     if find_video_file(capture_dir) is not None:
         return CaptureKind.VIDEO_ONLY
+    from pipeline.io.photo_capture import session_from_photo_folders
+
+    if session_from_photo_folders(capture_dir) is not None:
+        return CaptureKind.PHOTO_FOLDERS
     return CaptureKind.UNKNOWN
 
 
@@ -45,6 +50,8 @@ def detect_tier(capture_dir: Path, override: InputTier | None = None) -> InputTi
         return InputTier.VIDEO
     if kind == CaptureKind.STRAY_SCANNER:
         return InputTier.LIDAR
+    if kind == CaptureKind.PHOTO_FOLDERS:
+        return InputTier.PHOTOS
     if kind == CaptureKind.ROOMPLAN_MANIFEST:
         return InputTier.LIDAR
     return InputTier.LIDAR

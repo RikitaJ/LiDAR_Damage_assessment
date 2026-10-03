@@ -1,0 +1,16 @@
+{
+  "phase": 4,
+  "tier": "photos",
+  "status": "ok",
+  "rooms": 2,
+  "footprint_m2": 40.817,
+  "overlap_m2": 0.0,
+  "pytest": "55 passed (full suite, MPLBACKEND=Agg)",
+  "models_used": [
+    "photo_v0_prior",
+    "azure_openai_vlm_optional",
+    "shared_stitch"
+  ],
+  "azure_vlm_called": true,
+  "notes": "Set AZURE_OPENAI_* in .env for VLM layout; offline prior always works."
+}

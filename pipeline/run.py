@@ -102,6 +102,18 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
         config.loop_closure and apply_drift,
         drift_correction=apply_drift,
     )
+    layout_note = stitched.pop("_layout_warning", None)
+    if layout_note:
+        qa_warnings.append(layout_note)
+    if tier == InputTier.PHOTOS and stitched.get("adjacency"):
+        from pipeline.stitch.photo_door_verify import verify_photo_adjacency
+
+        qa_warnings.extend(
+            verify_photo_adjacency(
+                session,
+                [(e["room_a"], e["room_b"], e.get("via_opening_id", "")) for e in stitched["adjacency"]],
+            )
+        )
     overlap = pairwise_overlap_m2(rooms)
     if overlap > 0.05:
         qa_warnings.append(f"stitched room overlap {overlap:.3f} m²")
@@ -142,6 +154,13 @@ def _run_pipeline(capture_dir: Path, out_dir: Path, config: RunConfig) -> Path:
 
 
 def _drift_block(session, tier: InputTier, loop_closure: bool) -> dict:
+    if tier == InputTier.PHOTOS:
+        return {
+            "method": "photo_layout_solver",
+            "loop_closure_enabled": False,
+            "description": "Per-room folders: door pairing + 90° rotations + overlap penalty (brief §5.6).",
+            "pose_graph_notes": "No global poses; manifest adjacency or inferred door-width pairing.",
+        }
     if tier == InputTier.VIDEO:
         return {
             "method": "video_flow_loop",
@@ -163,6 +182,16 @@ def _drift_block(session, tier: InputTier, loop_closure: bool) -> dict:
         "description": "Rooms aligned at door midpoints; soft closure nudge on revisits.",
         "pose_graph_notes": "RoomPlan JSON wall frames.",
     }
+
+
+def _photo_used_vlm(rooms: list[dict] | None) -> bool:
+    if not rooms:
+        return False
+    for room in rooms:
+        notes = str(room.get("floor_area_m2", {}).get("confidence", {}).get("notes", ""))
+        if "photo_vlm" in notes:
+            return True
+    return False
 
 
 def _video_used_depth_fusion(rooms: list[dict] | None) -> bool:
@@ -189,9 +218,12 @@ def _models_used(session, tier: InputTier, rooms: list[dict] | None = None) -> l
         from pipeline.integrations.azure_optional import _env, _load_dotenv_once
 
         _load_dotenv_once()
+        used_vlm = _photo_used_vlm(rooms)
+        if used_vlm:
+            return ["photo_vlm_layout", "photo_door_stitch", "shared_stitch"]
         if _env("AZURE_OPENAI_API_KEY"):
             return ["photo_v0_prior", "azure_openai_vlm_optional", "shared_stitch"]
-        return ["photo_v0_prior", "shared_stitch"]
+        return ["photo_v0_prior", "photo_door_stitch", "shared_stitch"]
     if tier == InputTier.VIDEO:
         root = session.rooms[0].lidar_dir if session.rooms else None
         if root and (root / "odometry.csv").is_file() and find_video_file(root):

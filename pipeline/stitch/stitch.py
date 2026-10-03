@@ -23,14 +23,25 @@ def stitch(
 ) -> tuple[list[dict], dict]:
     apply_drift = loop_closure if drift_correction is None else drift_correction
     rooms = deepcopy(rooms)
-    edges = adjacency_hints or _infer_adjacency(rooms)
+    photo_inferred = False
+    if tier == InputTier.PHOTOS and not adjacency_hints:
+        from pipeline.stitch.photo_layout import infer_photo_adjacency
+
+        edges = infer_photo_adjacency(rooms)
+        photo_inferred = True
+    else:
+        edges = adjacency_hints or _infer_adjacency(rooms)
     g = nx.Graph()
     for r in rooms:
         g.add_node(r["room_id"])
     for a, b, oid in edges:
         g.add_edge(a, b, opening_id=oid)
 
-    if tier == InputTier.LIDAR and edges:
+    if tier == InputTier.PHOTOS and edges:
+        from pipeline.stitch.photo_layout import layout_photo_rooms
+
+        layout_photo_rooms(rooms, edges)
+    elif tier == InputTier.LIDAR and edges:
         _place_by_doors(rooms, edges, apply_drift)
     else:
         _place_chain(rooms, g, apply_drift)
@@ -49,6 +60,15 @@ def stitch(
         "render_path": "",
         "drift_correction_applied": apply_drift,
     }
+    if photo_inferred and len(rooms) > 1 and not edges:
+        stitched["_layout_warning"] = (
+            "photo: could not infer adjacency from doors; rooms placed in chain"
+        )
+    elif photo_inferred and len(edges) < len(rooms) - 1:
+        stitched["_layout_warning"] = (
+            "photo: inferred adjacency is a spanning tree only; "
+            "add manifest adjacency for hub connectors"
+        )
     return rooms, stitched
 
 
