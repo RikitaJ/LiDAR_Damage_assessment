@@ -73,14 +73,19 @@ def test_report_from_existing_runs(tmp_path):
     gt_dir.mkdir()
     (gt_dir / "b1_rep1.json").write_text(json.dumps(GT), encoding="utf-8")
     (gt_dir / "todo.json").write_text(json.dumps({"_meta": {"status": "TODO"}}), encoding="utf-8")
+    (gt_dir / "fixture.json").write_text(json.dumps(GT), encoding="utf-8")
+    manifest = tmp_path / "manifest.csv"
+    manifest.write_text("capture_id,tier\nb1_rep1,lidar\ntodo,lidar\n", encoding="utf-8")
     for cid in ("b1_rep1",):
         (runs / cid).mkdir(parents=True)
         plan = {"input_tier": "lidar", "rooms": [_room([4.324, 5.528, 4.324, 5.528])]}
         (runs / cid / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
     report = tmp_path / "REPORT.md"
-    assert main(["--gt", str(gt_dir), "--runs", str(runs), "--captures", str(tmp_path / "none"), "--report", str(report)]) == 0
+    args = ["--gt", str(gt_dir), "--runs", str(runs), "--captures", str(tmp_path / "none"),
+            "--manifest", str(manifest), "--report", str(report)]
+    assert main(args) == 0
     text = report.read_text(encoding="utf-8")
     assert "## b1_rep1 (lidar)" in text
     assert "| Wall 2 | 5.600 | 5.528 [5.478, 5.578] | -7.2 cm (-1.3 %) | ±2 cm | **FAIL** | no |" in text
     assert "Tape value inside the 90 % interval: 4 of 6 measurements." in text
-    assert "todo" not in text
+    assert "todo" not in text and "fixture" not in text

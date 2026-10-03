@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import subprocess
@@ -114,13 +115,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--runs", type=Path, default=ROOT / "out")
     p.add_argument("--gt", type=Path, default=ROOT / "data" / "ground_truth")
     p.add_argument("--report", type=Path, default=ROOT / "docs" / "BENCHMARK_REPORT.md")
+    p.add_argument("--manifest", type=Path, default=ROOT / "data" / "manifest.csv")
     p.add_argument("--rerun", action="store_true", help="run the pipeline on each capture with ground truth first")
     args = p.parse_args(argv)
 
+    with args.manifest.open(encoding="utf-8", newline="") as f:
+        listed = {row["capture_id"] for row in csv.DictReader(f)}
     gts = {}
     for path in sorted(args.gt.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
-        if data.get("_meta", {}).get("status") == "complete":
+        if path.stem in listed and data.get("_meta", {}).get("status") == "complete":
             gts[path.stem] = data
 
     lines = [
