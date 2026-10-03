@@ -191,11 +191,13 @@ def readme_block(title: str, scored, app: dict | None) -> list[str]:
     name = f"{app['app']} {app['version']}" if app else None
     head = f"| {title} | Tape | Ours [90 % interval] | Our error |" + (f" {name} | Their error |" if app else "")
     lines = [head, "|---|---|---|---|" + ("---|---|" if app else "")]
-    for r in rows:
-        line = f"| {r.name} | {r.truth:.3f} | {fmt_interval(r)} | {fmt_error(r.name, r.error, r.truth)} |"
+    entries = [(r.name, r.truth, fmt_interval(r), fmt_error(r.name, r.error, r.truth)) for r in rows]
+    entries += [(name, truth, "not detected", "—") for _, _, ops in scored for name, truth in ops.get("undetected", [])]
+    for name_, truth, ours, our_error in entries:
+        line = f"| {name_} | {truth:.3f} | {ours} | {our_error} |"
         if app:
-            value = area_theirs if r.name.startswith("Floor area") else theirs.get(r.name)
-            line += (f" {value:.3f} | {fmt_error(r.name, value - r.truth, r.truth)} |" if value is not None else " — | — |")
+            value = area_theirs if name_.startswith("Floor area") else theirs.get(name_)
+            line += (f" {value:.3f} | {fmt_error(name_, value - truth, truth)} |" if value is not None else " — | — |")
         lines.append(line)
     gates = [f"{r.name} {fmt_gate(r.tolerance)}: {fmt_result(r)}" for r in rows if r.tolerance]
     for _, _, ops in scored:

@@ -143,6 +143,8 @@ def test_report_and_readme_from_existing_runs(tmp_path):
     assert "| Wall 1 | 4.350 | 4.324 [4.274, 4.374] | -2.6 cm (-0.6 %) | 4.360 | +1.0 cm (+0.2 %) |" in block
     assert "| Floor area (m²) | 24.360 | 23.900 [22.400, 25.400] | -0.46 m² (-1.9 %) | 24.320 | -0.04 m² (-0.2 %) |" in block
     assert "| Ceiling height | 2.985 | 2.960 [2.910, 3.010] | -2.5 cm (-0.8 %) | — | — |" in block
+    assert "| Window 1 width | 0.700 | not detected | — | 0.692 | -0.8 cm (-1.1 %) |" in block
+    assert "| Door 2 width | 0.889 | not detected | — | — | — |" in block
     assert "Ceiling height ±1.5 cm: miss by 1.0 cm" in block and "head-to-head ≥ 70 % beat or tie: 0 of 6 (miss)" in block
 
 
