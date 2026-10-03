@@ -95,15 +95,6 @@ def footprint_from_path_xz(xs: np.ndarray, zs: np.ndarray) -> tuple[list[list[fl
     return corners, _polygon_area(corners)
 
 
-def ceiling_height_from_planes(pts: np.ndarray, floor_n: np.ndarray, floor_d: float) -> float:
-    dist = pts @ floor_n - floor_d
-    above = dist[dist > 0.25]
-    if len(above) < 50:
-        y = pts[:, 1]
-        return max(2.2, min(float(np.percentile(y, 96) - np.percentile(y, 4)), 4.5))
-    return max(2.2, min(float(np.percentile(above, 92)), 4.5))
-
-
 def _occupancy_footprint(
     xz: np.ndarray,
     warnings: list[str],

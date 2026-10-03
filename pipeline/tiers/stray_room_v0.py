@@ -45,7 +45,8 @@ def parse_stray_room(
 
     if pts is not None and len(pts) >= 120:
         room, extra = room_from_point_cloud(
-            pts, room_id, name, scale_sigma_rel=cf.scale_sigma_rel, rng=rng
+            pts, room_id, name, scale_sigma_rel=cf.scale_sigma_rel, rng=rng,
+            camera_positions=np.array([fr.T_world_cam[:3, 3] for fr in cf.frames]),
         )
         return room, warnings + extra
 
