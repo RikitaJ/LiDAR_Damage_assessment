@@ -16,6 +16,15 @@ single_room sample data_given/**/out_*/
 
 # Optional large local captures
 *.zip
+# Raw captures stay on Drive, not in git (brief rule 7)
+CAPTURE LOG*/
+single_room sample data_given/*/depth/
+single_room sample data_given/*/confidence/
+single_room sample data_given/*/rgb.mp4
+*.mov
+*.MOV
+*.heic
+*.HEIC
 
 # OS / IDE
 .DS_Store
