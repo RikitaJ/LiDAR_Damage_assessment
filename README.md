@@ -87,3 +87,11 @@ Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one w
 
 
 Used AI coding assistants: Cursor (Builder) and Claude Code (Tester). Their co-author trailers are kept in the commits.
+
+## Team and roles
+
+- **Rikita (`RikitaJ`), Builder:** the pipeline (`pipeline/`), built with Cursor on her laptop. Her commits are authored as `sshahi807`.
+- **Tester:** the evaluation (`eval/`), the fix loop (`fixloop/`) and the docs, written with Claude Code on Sai Praneeth Boggula's laptop. That is why those commits carry his name.
+- **Devices:** Rikita has no iPhone, so the B1 captures and the magicplan scan were made on Sai Praneeth's iPhone 13 Pro. The tape measurements were taken by two people.
+
+**Why a separate Builder and Tester.** If one AI builds and tests in the same tool, the code is judged by the thing that wrote it. We kept the two apart: the Tester runs on a second laptop, with a different AI in its own environment, and judges the Builder's work against tape ground truth. The fix loop shows this working. The Tester's evaluation caught a regression in the Builder's LiDAR geometry on B1, the fix was declared before any code changed, and the same evaluation scored it (`fixloop/`).
