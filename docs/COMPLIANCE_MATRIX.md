@@ -32,7 +32,7 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 | R14 | Furnished room with staged damage in two classes | — | — | missing | B1 is furnished, but no damage was staged. |
 | R15 | Same rooms at all three tiers | `data/manifest.csv` | `lidar_B1_rep1`, `video_B1`, `photos_B1_1x`, `photos_B1_05x` | partial | B1 was captured at all three tiers; only the LiDAR tier is scored (see R2). |
 | R16 | One room captured twice at the same tier | `eval/accuracy.py` (`repeatability`) | report section | missing | A second B1 scan was made on site but not saved. |
-| R17 | Laser or tape ground truth; raw data submitted | `data/ground_truth/lidar_B1_rep1.json`, `data/manifest.csv` | tape values with assumptions | partial | B1 walls, ceiling and openings were taped. The company samples have no ground truth. Raw files are on Drive; the download links are pending. |
+| R17 | Laser or tape ground truth; raw data submitted | `data/ground_truth/lidar_B1_rep1.json`, `data/manifest.csv` | tape values with assumptions | partial | B1 walls, ceiling and openings were taped. The company samples have no ground truth. Raw files are on Drive, linked with sha256 in the manifest. |
 | R18 | Round 1 gates | `eval/accuracy.py` (`TOLERANCES`) | benchmark report | partial | The gates were not provided; working assumption A1 is used. |
 | R19 | Opening widths ≤ 2 cm on ≥ 85 %, misses and phantoms counted | `eval/accuracy.py` (`score_openings`) | benchmark report | done | Scored per the spec rule. The result on B1 is a fail. |
 | R20 | Ceiling ≤ 1.5 cm per room; spread ≤ 1 cm across captures | `eval/accuracy.py` | benchmark report | partial | Per-room: passes on B1. Spread: needs a second capture (R16). |
@@ -52,11 +52,11 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 | R29 | Compliance matrix | `docs/COMPLIANCE_MATRIX.md` | this file | done | |
 | R30 | Capture route document plus device matrix | `docs/CAPTURE_PROTOCOL.md`, `docs/DEVICE_MATRIX.md` | protocol and table | done | See R1 and R3. |
 | R31 | README to a running fresh capture in under 15 minutes; one command | `README.md` | setup and run steps | partial | A fresh install plus a B1 run is verified on Windows 11 with Python 3.12; not tried on macOS or Linux. |
-| R32 | Reproduction bundle | `eval/run.py`, `fixloop/run.sh`, `scripts/fetch_data.py`, `data/manifest.csv` | regenerated report and fix loop | partial | Every reported number regenerates from raw captures. The manifest still needs the Drive download links. |
+| R32 | Reproduction bundle | `eval/run.py`, `fixloop/run.sh`, `scripts/fetch_data.py`, `data/manifest.csv` | regenerated report and fix loop | partial | Every reported number regenerates from raw captures, which `scripts/fetch_data.py` downloads from Drive with sha256 checks. |
 | R33 | Benchmark report: all tiers, repeatability, head-to-head, timing | `docs/BENCHMARK_REPORT.md` | report | partial | LiDAR gates, head-to-head and timing are there. Repeatability and the photo and video tiers are not. |
 | R34 | Fix-loop bundle | `fixloop/` | see R27 | done | |
 | R35 | Technical report, 6 pages max | `docs/TECHNICAL_REPORT.md` | report (3 A4 pages) | done | Covers architecture, tiers and devices, drift, error budget, calibration, the fix loop and failure modes. |
-| R36 | Raw benchmark data: sensor logs, ground truth, app exports | `data/manifest.csv`, `data/ground_truth/`, `data/app_exports/` | Drive files with sha256 | partial | Download links pending; the magicplan export needs a paid plan. |
+| R36 | Raw benchmark data: sensor logs, ground truth, app exports | `data/manifest.csv`, `data/ground_truth/`, `data/app_exports/` | Drive files with sha256 | partial | All captures are on Drive, linked in the manifest. The magicplan export needs a paid plan, so its values were read off the app. |
 
 ## Constraints and the walk-in
 
@@ -77,6 +77,6 @@ Every requirement from the case study (IDs from `docs/ASSESSMENT_BRIEF.md` §2),
 | A3 | Strict gates apply to the LiDAR tier | Assumed; photo and video are reported against them where scored. |
 | A4 | The email's sample data is to be run and its outputs included | Done (R41). |
 | A5 | Devices | Every capture is from an iPhone 13 Pro, iOS 18.7.8. That is in spec for LiDAR and a disclosed deviation for photo and video. |
-| A6 | Two-person team | Confirmed verbally by the recruiter; both authors credited in the README. |
+| A6 | Two-person team | Confirmed verbally by the recruiter. |
 | A7 | Central 90 % intervals `[lo, hi]` | Implemented (`pipeline/measure/intervals.py`). |
 | A8 | Ground truth by tape | Steel tape, two people (`data/ground_truth/lidar_B1_rep1.json`). |

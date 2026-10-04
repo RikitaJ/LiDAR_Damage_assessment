@@ -75,7 +75,7 @@ Gates: Wall 1 ±2 cm: pass; Wall 2 ±2 cm: miss by 1.9 cm; Wall 3 ±2 cm: pass; 
 
 **Ground-truth method and limits.** Steel tape, two people. Room length and width were read once each, and opposite walls are assumed equal. The ceiling was read twice, hanging the tape from a stool. Both doors share one size, and so do both windows; each size was taped once. Not done from the brief's method: two readings per wall at 1 m height, and door jamb depths. Every value and assumption is in `data/ground_truth/lidar_B1_rep1.json`.
 
-Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one with its sha256, and `scripts/fetch_data.py` downloads them once their URLs are filled in.
+Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one with its sha256, and `python scripts/fetch_data.py` downloads them from Google Drive and checks each sha256.
 
 ## Models, apps and APIs used
 
