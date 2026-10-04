@@ -85,10 +85,5 @@ Raw captures are not in git (brief rule 7). `data/manifest.csv` lists each one w
 - **Azure OpenAI** hooks exist in `pipeline/integrations/` for photo layout and damage hints. They are off unless a `.env` provides keys, and they were off for every result reported here.
 - **magicplan** 2026.38.0 was used only for the head-to-head comparison.
 
-## Team and contributions
 
-We are a two-person team, as agreed with the recruiter.
-- **Rikita (`RikitaJ`)**, Builder: the pipeline, meaning the LiDAR, photo and video tiers, stitching, damage detection, rules and scope (`pipeline/`). Her commits are authored as `sshahi807`.
-- **Sai Praneeth Boggula**, Tester: the B1 captures at all three tiers, the tape ground truth and the magicplan scan, the evaluation (`eval/`), the fix loop (`fixloop/`) and the documentation (`docs/`).
-
-We used AI coding assistants: Cursor (Builder) and Claude Code (Tester). Their co-author trailers are kept in the commits.
+Used AI coding assistants: Cursor (Builder) and Claude Code (Tester). Their co-author trailers are kept in the commits.
